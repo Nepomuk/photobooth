@@ -1,2 +1,5 @@
 # don't include other software
 piggyphoto
+
+# the UI.py-file is generated from .ui
+*UI.py
