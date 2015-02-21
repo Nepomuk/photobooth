@@ -76,9 +76,9 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QScrollArea" name="scrollArea_takenPictures">
+      <widget class="QListWidget" name="listWidget_lastPictures">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -89,20 +89,24 @@
          <height>0</height>
         </size>
        </property>
-       <property name="widgetResizable">
-        <bool>true</bool>
+       <property name="autoFillBackground">
+        <bool>false</bool>
        </property>
-       <widget class="QWidget" name="scrollAreaWidgetContents">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>198</width>
-          <height>378</height>
-         </rect>
-        </property>
-        <zorder>label_title</zorder>
-       </widget>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>170</width>
+         <height>130</height>
+        </size>
+       </property>
+       <property name="resizeMode">
+        <enum>QListView::Adjust</enum>
+       </property>
+       <property name="viewMode">
+        <enum>QListView::IconMode</enum>
+       </property>
       </widget>
      </item>
     </layout>

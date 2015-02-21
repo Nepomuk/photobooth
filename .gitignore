@@ -1,5 +1,8 @@
 # don't include other software
-piggyphoto
+piggyphoto/
 
 # the UI.py-file is generated from .ui
 *UI.py
+
+# skip the taken pictures folder
+pictures/
