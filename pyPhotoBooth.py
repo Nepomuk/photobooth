@@ -28,7 +28,6 @@ class BoothUI(QtGui.QWidget):
         quit_action.setShortcuts(['Ctrl+Q', 'Ctrl+W'])
         quit_action.triggered.connect(QtGui.qApp.closeAllWindows)
         self.addAction(quit_action)
-        self.ui.pushButton_quit.clicked.connect(QtGui.qApp.closeAllWindows)
 
 
     def setupCamera(self):
@@ -39,7 +38,7 @@ class BoothUI(QtGui.QWidget):
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.displayVideoStream)
-        self.timer.start(30)
+        self.timer.start(50)
 
     def displayVideoStream(self):
         """ Read frame from camera and repaint QLabel widget. """
@@ -48,7 +47,7 @@ class BoothUI(QtGui.QWidget):
         frame = cv2.flip(frame, 1)
         image = QtGui.QImage(frame, frame.shape[1], frame.shape[0],
                        frame.strides[0], QtGui.QImage.Format_RGB888)
-        self.ui.label_photo.setPixmap(QtGui.QPixmap.fromImage(image))
+        self.ui.label_pictureView.setPixmap(QtGui.QPixmap.fromImage(image))
 
 
 if __name__ == "__main__":
@@ -56,4 +55,5 @@ if __name__ == "__main__":
     app = QtGui.QApplication([])
     myGui = BoothUI()
     myGui.show()
+    myGui.raise_()
     sys.exit(app.exec_())
