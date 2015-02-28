@@ -4,6 +4,7 @@
 # http://github.com/Nepomuk/pyPhotoBooth
 
 import sys, os
+import glob
 import time
 
 import numpy as np
@@ -24,15 +25,16 @@ def getFileName(singlePicture = True):
     return PICTURE_PATH + basename + extension
 
 
-def getLastPictures():
-    pictures = {}
-    for f in os.listdir(PICTURE_PATH):
-        filepath = os.path.join(PICTURE_PATH, f)
-        if not os.path.isfile(filepath):
-            continue
+def getPictureList():
+    # get a sorted list of files
+    pictureFiles = filter(os.path.isfile, glob.glob(PICTURE_PATH + "*.jpg"))
+    pictureFiles.sort(key=lambda x: os.path.getctime(x))
 
-        picture = QIcon(filepath)
-        pictures[f] = picture
+    # go through the filenames and create QIcons
+    pictures = {}
+    for f in pictureFiles:
+        timeInfo = time.strftime( "%H:%M:%S", time.localtime(os.path.getctime(f)) )
+        pictures[timeInfo] = QIcon(f)
     return pictures
 
 
@@ -99,7 +101,7 @@ class BoothUI(QWidget):
 
     def updatePictureList(self):
         """ Gets a list of QPixmaps from the latest images. """
-        pictures = getLastPictures()
+        pictures = getPictureList()
         self.ui.listWidget_lastPictures.clear()
         for p in pictures:
             newItem = QListWidgetItem(pictures[p], p, self.ui.listWidget_lastPictures)
