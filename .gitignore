@@ -3,6 +3,7 @@ piggyphoto/
 
 # the UI.py-file is generated from .ui
 *UI.py
+*_rc.py
 
 # skip the taken pictures folder
 pictures/
