@@ -35,7 +35,11 @@ def getPictureList():
     pictures = []
     for f in pictureFiles:
         timeInfo = time.strftime( "%H:%M:%S", time.localtime(os.path.getctime(f)) )
-        pictures.append({"pic": QIcon(f), "title": timeInfo})
+        pictures.append({
+            "title": timeInfo,
+            "pic":   QIcon(f),
+            "path":  f
+        })
     return pictures
 
 
@@ -62,6 +66,9 @@ class BoothUI(QWidget):
 
         # take an image
         self.ui.pushButton_capture.clicked.connect(self.captureImage)
+
+        # select an image
+        self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
 
     def setupWebcam(self):
@@ -102,12 +109,20 @@ class BoothUI(QWidget):
 
     def updatePictureList(self):
         """ Gets a list of QPixmaps from the latest images. """
-        pictures = getPictureList()
+        self.picturesList = getPictureList()
         self.ui.listWidget_lastPictures.clear()
-        for p in pictures:
+        for p in self.picturesList:
             newItem = QListWidgetItem(p['pic'], p['title'], self.ui.listWidget_lastPictures)
 
 
+    def displayImage(self):
+        """ Get the currently selected image and display it. """
+        self.camRefresh.stop()
+
+        selectedImageID = self.ui.listWidget_lastPictures.currentRow()
+        selectedImage = self.picturesList[selectedImageID]
+        selectedImagePixmap = QPixmap(selectedImage['path'])
+        self.ui.label_pictureView.setPixmap(selectedImagePixmap)
 
 
 if __name__ == "__main__":
