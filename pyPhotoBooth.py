@@ -17,6 +17,11 @@ from photoBoothUI import Ui_photoBooth
 
 PICTURE_PATH = "pictures/"
 
+# some states the UI can be in
+S_LIVEVIEW = 'liveView'
+S_DISPLAY = 'displayImage'
+
+
 def getFileName(singlePicture = True):
     """ Generate a file name for the picture. """
     currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -49,6 +54,8 @@ class BoothUI(QWidget):
         QWidget.__init__(self, parent)
         self.ui = Ui_photoBooth()
         self.ui.setupUi(self)
+        self.ui.currentState = S_LIVEVIEW
+        self.initIcons()
 
         # display the latest pictures
         self.updatePictureList()
@@ -69,6 +76,19 @@ class BoothUI(QWidget):
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
+
+
+    def initIcons(self):
+        self.camera = {
+            "title": "Foto!",
+            "pic":   QIcon("camera.png"),
+            "path":  "camera.png"
+        }
+        self.liveView = {
+            "title": "",
+            "pic":   QIcon("liveview.png"),
+            "path":  "liveview.png"
+        }
 
 
     def setupWebcam(self):
@@ -109,20 +129,27 @@ class BoothUI(QWidget):
 
     def updatePictureList(self):
         """ Gets a list of QPixmaps from the latest images. """
-        self.picturesList = getPictureList()
+        self.pictureList = getPictureList()
+        self.pictureList.insert(0, self.liveView)
+
+        # put the pictures in the list
         self.ui.listWidget_lastPictures.clear()
-        for p in self.picturesList:
+        for p in self.pictureList:
             newItem = QListWidgetItem(p['pic'], p['title'], self.ui.listWidget_lastPictures)
 
 
     def displayImage(self):
         """ Get the currently selected image and display it. """
-        self.camRefresh.stop()
 
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
-        selectedImage = self.picturesList[selectedImageID]
-        selectedImagePixmap = QPixmap(selectedImage['path'])
-        self.ui.label_pictureView.setPixmap(selectedImagePixmap)
+        if selectedImageID > 0:
+            selectedImage = self.pictureList[selectedImageID]
+            selectedImagePixmap = QPixmap(selectedImage['path'])
+            self.camRefresh.stop()
+            self.ui.label_pictureView.setPixmap(selectedImagePixmap)
+        else:
+            if not self.camRefresh.isActive():
+                self.camRefresh.start(self.refreshTimout)
 
 
 if __name__ == "__main__":
