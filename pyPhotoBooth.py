@@ -4,6 +4,7 @@
 # http://github.com/Nepomuk/pyPhotoBooth
 
 import sys, os
+import time
 
 import numpy as np
 import cv2
@@ -15,9 +16,10 @@ from photoBoothUI import Ui_photoBooth
 
 PICTURE_PATH = "pictures/"
 
-def getFileName():
+def getFileName(singlePicture = True):
     """ Generate a file name for the picture. """
-    basename = "test"   # make this based on timestamps
+    currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
+    basename = currentTimeString + "_" + ("single" if singlePicture else "series")
     extension = ".jpg"
     return PICTURE_PATH + basename + extension
 
@@ -46,6 +48,7 @@ class BoothUI(QWidget):
 
         # init the webcam
         self.liveViewSize = QSize(711, 400)
+        self.refreshTimout = 50
         self.setupWebcam()
 
         # quit shortcut & button
@@ -66,7 +69,7 @@ class BoothUI(QWidget):
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayWebcamStream)
-        self.camRefresh.start(50)
+        self.camRefresh.start(self.refreshTimout)
 
 
     def displayWebcamStream(self):
@@ -81,10 +84,17 @@ class BoothUI(QWidget):
 
     def captureImage(self):
         """ Read frame from camera and repaint QLabel widget. """
+        # first, block the webcam stream for a while
+        self.camRefresh.stop()
+
+        # now take a picture
         _, frame = self.capture.read()
         cv2.imwrite(getFileName(), frame)
         # print "Written {0} to disk.".format(getFileName())
         self.updatePictureList()
+
+        # get the live feed running again
+        self.camRefresh.start(self.refreshTimout)
 
 
     def updatePictureList(self):
