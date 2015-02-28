@@ -29,12 +29,13 @@ def getPictureList():
     # get a sorted list of files
     pictureFiles = filter(os.path.isfile, glob.glob(PICTURE_PATH + "*.jpg"))
     pictureFiles.sort(key=lambda x: os.path.getctime(x))
+    pictureFiles.reverse()
 
     # go through the filenames and create QIcons
-    pictures = {}
+    pictures = []
     for f in pictureFiles:
         timeInfo = time.strftime( "%H:%M:%S", time.localtime(os.path.getctime(f)) )
-        pictures[timeInfo] = QIcon(f)
+        pictures.append({"pic": QIcon(f), "title": timeInfo})
     return pictures
 
 
@@ -104,7 +105,7 @@ class BoothUI(QWidget):
         pictures = getPictureList()
         self.ui.listWidget_lastPictures.clear()
         for p in pictures:
-            newItem = QListWidgetItem(pictures[p], p, self.ui.listWidget_lastPictures)
+            newItem = QListWidgetItem(p['pic'], p['title'], self.ui.listWidget_lastPictures)
 
 
 
