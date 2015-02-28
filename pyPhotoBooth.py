@@ -55,7 +55,7 @@ class BoothUI(QWidget):
         self.ui = Ui_photoBooth()
         self.ui.setupUi(self)
         self.ui.currentState = S_LIVEVIEW
-        self.initIcons()
+        self.initObjects()
 
         # display the latest pictures
         self.updatePictureList()
@@ -78,16 +78,19 @@ class BoothUI(QWidget):
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
 
-    def initIcons(self):
-        self.camera = {
-            "title": "Foto!",
-            "pic":   QIcon("camera.png"),
-            "path":  "camera.png"
-        }
-        self.liveView = {
+    def initObjects(self):
+        self.liveViewIcon = {
             "title": "",
             "pic":   QIcon("liveview.png"),
             "path":  "liveview.png"
+        }
+        self.title = {
+            'liveview':     "Vorschau",
+            'display':      "Bild von {0}",
+            'countdown1':   "Foto in 3, ...",
+            'countdown2':   "Foto in 3, 2, ...",
+            'countdown3':   "Foto in 3, 2, 1, ...",
+            'countdown4':   "Laecheln!",
         }
 
 
@@ -110,12 +113,14 @@ class BoothUI(QWidget):
         image = QImage(frame, frame.shape[1], frame.shape[0],
                        frame.strides[0], QImage.Format_RGB888)
         self.ui.label_pictureView.setPixmap(QPixmap.fromImage(image))
+        self.ui.label_title.setText(self.title['liveview'])
 
 
     def captureImage(self):
         """ Read frame from camera and repaint QLabel widget. """
         # first, block the webcam stream for a while
         self.camRefresh.stop()
+        self.ui.label_title.setText(self.title['countdown4'])
 
         # now take a picture
         _, frame = self.capture.read()
@@ -130,7 +135,7 @@ class BoothUI(QWidget):
     def updatePictureList(self):
         """ Gets a list of QPixmaps from the latest images. """
         self.pictureList = getPictureList()
-        self.pictureList.insert(0, self.liveView)
+        self.pictureList.insert(0, self.liveViewIcon)
 
         # put the pictures in the list
         self.ui.listWidget_lastPictures.clear()
@@ -140,13 +145,13 @@ class BoothUI(QWidget):
 
     def displayImage(self):
         """ Get the currently selected image and display it. """
-
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
         if selectedImageID > 0:
             selectedImage = self.pictureList[selectedImageID]
             selectedImagePixmap = QPixmap(selectedImage['path'])
             self.camRefresh.stop()
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
+            self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
         else:
             if not self.camRefresh.isActive():
                 self.camRefresh.start(self.refreshTimout)
