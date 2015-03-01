@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>printer.png</file>
     <file>camera.png</file>
   </qresource>
 </RCC>

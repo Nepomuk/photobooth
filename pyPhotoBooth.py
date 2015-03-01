@@ -3,13 +3,20 @@
 # pyPhotoBooth - Python tool to take pictures and print them
 # http://github.com/Nepomuk/pyPhotoBooth
 
+# general libraries
 import sys, os
 import glob
 import time
 
+# printing
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+
+# used for the webcam
 import numpy as np
 import cv2
 
+# the UI
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
@@ -77,6 +84,9 @@ class BoothUI(QWidget):
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
+        # print the selected image
+        self.ui.pushButton_print.clicked.connect(self.printImage)
+
 
     def initObjects(self):
         self.liveViewIcon = {
@@ -114,6 +124,7 @@ class BoothUI(QWidget):
                        frame.strides[0], QImage.Format_RGB888)
         self.ui.label_pictureView.setPixmap(QPixmap.fromImage(image))
         self.ui.label_title.setText(self.title['liveview'])
+        self.ui.pushButton_print.setEnabled(False)
 
 
     def captureImage(self):
@@ -150,12 +161,26 @@ class BoothUI(QWidget):
             selectedImage = self.pictureList[selectedImageID]
             selectedImagePixmap = QPixmap(selectedImage['path'])
             self.camRefresh.stop()
+            self.ui.pushButton_print.setEnabled(True)
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
             self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
         else:
             if not self.camRefresh.isActive():
                 self.camRefresh.start(self.refreshTimout)
 
+
+    def printImage(self):
+        """ Get the currently selected image and print it. """
+        selectedImageID = self.ui.listWidget_lastPictures.currentRow()
+        if selectedImageID > 0:
+            # The idea is the following: create a pdf that is stored in a
+            # temporary directory. When this is created, it is sent to the
+            # printer via popen2.popen4
+            selectedImage = self.pictureList[selectedImageID]
+            c = canvas.Canvas('print.pdf')
+            c.drawImage(selectedImage['path'], 0, 0, 10*cm, 10*cm)
+            c.showPage()
+            c.save()
 
 if __name__ == "__main__":
     # the GUI
