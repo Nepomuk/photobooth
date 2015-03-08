@@ -5,6 +5,7 @@
 
 # general libraries
 import sys, os
+import subprocess32 as subprocess
 import glob
 import time
 
@@ -14,7 +15,7 @@ from reportlab.lib.units import mm
 
 # used for the webcam
 import numpy as np
-import cv2
+import cv, cv2
 
 # the UI
 from PyQt4.QtCore import *
@@ -35,14 +36,15 @@ class Dimensions():
         self.height = self.height_raw * mm
 
     def getRatio(self):
-        return self.width_raw / self.height_raw
+        return float(self.width_raw) / self.height_raw
 
     def getPageSize(self):
         return (self.width, self.height)
 
 
-WEBCAM_WIDTH_PX = 700
-WEBCAM_HEIGHT_PX = 400
+WEBCAM_WIDTH_PX = 740
+WEBCAM_HEIGHT_PX = 500
+PRINTER_NAME = "Samsung_CLX_4195n"
 
 # some states the UI can be in
 S_LIVEVIEW = 'liveView'
@@ -100,7 +102,7 @@ class BoothUI(QWidget):
         self.addAction(quit_action)
 
         # take an image
-        self.ui.pushButton_capture.clicked.connect(self.captureImage)
+        self.ui.pushButton_capture.clicked.connect(self.takeImage)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
@@ -113,8 +115,8 @@ class BoothUI(QWidget):
         self.printDim = Dimensions()
         self.liveViewIcon = {
             "title": "",
-            "pic":   QIcon("liveview.png"),
-            "path":  "liveview.png"
+            "pic":   QIcon("graphics/liveview.png"),
+            "path":  "graphics/liveview.png"
         }
         self.title = {
             'liveview':     "Vorschau",
@@ -129,34 +131,70 @@ class BoothUI(QWidget):
     def setupWebcam(self):
         """ Initialize webcam camera and get regular pictures """
         self.capture = cv2.VideoCapture(0)
-        self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.liveViewSize.width())
-        self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.liveViewSize.height())
+        # self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.liveViewSize.width())
+        # self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.liveViewSize.height())
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayWebcamStream)
         self.camRefresh.start(self.refreshTimout)
 
 
+    def captureFrame(self):
+        _, frame = self.capture.read()
+
+        # get the current ratio
+        frameSize = cv.GetSize(cv.fromarray(frame))
+        frameRatio = float(frameSize[0]) / frameSize[1]
+
+        # which direction should be cut?
+        if frameRatio > self.printDim.getRatio():
+            # image is wider than it should be, keep height
+            newWidth = self.printDim.getRatio() * frameSize[1]
+            cutWidth = ( frameSize[0] - newWidth ) / 2
+            newFrame = frame[0:frameSize[1], cutWidth:(cutWidth+newWidth)]
+        else:
+            # image is higher than it should be, keep width
+            newHeigth = float(frameSize[0]) / self.printDim.getRatio()
+            cutHeigth = ( frameSize[1] - newHeigth ) / 2
+            newFrame = frame[cutHeigth:(cutHeigth+newHeigth), 0:frameSize[0]]
+
+        return newFrame
+
+
+    def scaleImageToLabel(self, pixmap):
+        """ Scale the image to the label's area. """
+        labelWidth = self.ui.label_pictureView.width()
+        labelHeight = self.ui.label_pictureView.height()
+        return pixmap.scaled(labelWidth, labelHeight, Qt.KeepAspectRatio)
+
+
     def displayWebcamStream(self):
         """ Read frame from camera and repaint QLabel widget. """
-        _, frame = self.capture.read()
+        frame = self.captureFrame()
+
+        # apply some corrections to the live feed
         frame = cv2.cvtColor(frame, cv2.cv.CV_BGR2RGB)
         frame = cv2.flip(frame, 1)
         image = QImage(frame, frame.shape[1], frame.shape[0],
                        frame.strides[0], QImage.Format_RGB888)
-        self.ui.label_pictureView.setPixmap(QPixmap.fromImage(image))
+
+        # scale the image down if necessary
+        pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
+
+        # set image and labels
+        self.ui.label_pictureView.setPixmap(pixmap)
         self.ui.label_title.setText(self.title['liveview'])
         self.ui.pushButton_print.setEnabled(False)
 
 
-    def captureImage(self):
+    def takeImage(self):
         """ Read frame from camera and repaint QLabel widget. """
         # first, block the webcam stream for a while
         self.camRefresh.stop()
         self.ui.label_title.setText(self.title['countdown4'])
 
         # now take a picture
-        _, frame = self.capture.read()
+        frame = self.captureFrame()
         cv2.imwrite(getFileName(), frame)
         # print "Written {0} to disk.".format(getFileName())
         self.updatePictureList()
@@ -180,13 +218,20 @@ class BoothUI(QWidget):
         """ Get the currently selected image and display it. """
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
         if selectedImageID > 0:
-            selectedImage = self.pictureList[selectedImageID]
-            selectedImagePixmap = QPixmap(selectedImage['path'])
+            # first, stop the live feed
             self.camRefresh.stop()
             self.ui.pushButton_print.setEnabled(True)
+
+            # load the image and display it
+            # (Note: It scales the image only once when it loads it.
+            #        Resizing the window after that doesn't change scaling.)
+            selectedImage = self.pictureList[selectedImageID]
+            selectedImagePixmap = QPixmap(selectedImage['path'])
+            selectedImagePixmap = self.scaleImageToLabel(selectedImagePixmap)
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
             self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
         else:
+            # reactivate the live feed
             if not self.camRefresh.isActive():
                 self.camRefresh.start(self.refreshTimout)
 
@@ -197,9 +242,10 @@ class BoothUI(QWidget):
         if selectedImageID > 0:
             # The idea is the following: create a pdf that is stored in a
             # temporary directory. When this is created, it is sent to the
-            # printer via popen2.popen4
+            # printer via subprocess.Popen
             selectedImage = self.pictureList[selectedImageID]
-            generatedPDF = generatePDFsingle(selectedImage)
+            generatedPDF = self.generatePDFsingle(selectedImage)
+            #subprocess.Popen(['lpr', "-P " + PRINTER_NAME, generatedPDF])
 
 
     def generatePDFsingle(self, image):

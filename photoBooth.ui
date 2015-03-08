@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>947</width>
-    <height>523</height>
+    <width>976</width>
+    <height>623</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -91,8 +91,8 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>711</width>
-         <height>400</height>
+         <width>740</width>
+         <height>500</height>
         </size>
        </property>
        <property name="autoFillBackground">
@@ -187,7 +187,7 @@
        </property>
        <property name="icon">
         <iconset resource="photoBooth.qrc">
-         <normaloff>:/icon/camera.png</normaloff>:/icon/camera.png</iconset>
+         <normaloff>:/icon/graphics/camera.png</normaloff>:/icon/graphics/camera.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -232,7 +232,7 @@
        </property>
        <property name="icon">
         <iconset resource="photoBooth.qrc">
-         <normaloff>:/icon/printer.png</normaloff>:/icon/printer.png</iconset>
+         <normaloff>:/icon/graphics/printer.png</normaloff>:/icon/graphics/printer.png</iconset>
        </property>
        <property name="iconSize">
         <size>
