@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>937</width>
-    <height>489</height>
+    <width>947</width>
+    <height>523</height>
    </rect>
   </property>
   <property name="focusPolicy">
    <enum>Qt::NoFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>photoBooth</string>
+   <string notr="true">ZambaPhoto</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -88,6 +88,12 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>711</width>
+         <height>400</height>
+        </size>
        </property>
        <property name="autoFillBackground">
         <bool>false</bool>

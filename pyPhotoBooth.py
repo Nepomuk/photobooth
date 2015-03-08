@@ -10,7 +10,7 @@ import time
 
 # printing
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import cm
+from reportlab.lib.units import mm
 
 # used for the webcam
 import numpy as np
@@ -22,7 +22,27 @@ from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
 
 
+# paths to generated files
 PICTURE_PATH = "pictures/"
+PRINTS_PATH = "prints/"
+
+# dimensions
+class Dimensions():
+    def __init__(self, parent=None):
+        self.width_raw = 148
+        self.height_raw = 100
+        self.width = self.width_raw * mm
+        self.height = self.height_raw * mm
+
+    def getRatio(self):
+        return self.width_raw / self.height_raw
+
+    def getPageSize(self):
+        return (self.width, self.height)
+
+
+WEBCAM_WIDTH_PX = 700
+WEBCAM_HEIGHT_PX = 400
 
 # some states the UI can be in
 S_LIVEVIEW = 'liveView'
@@ -50,7 +70,8 @@ def getPictureList():
         pictures.append({
             "title": timeInfo,
             "pic":   QIcon(f),
-            "path":  f
+            "path":  f,
+            "base":  os.path.splitext( os.path.basename(f) )[0]
         })
     return pictures
 
@@ -68,7 +89,7 @@ class BoothUI(QWidget):
         self.updatePictureList()
 
         # init the webcam
-        self.liveViewSize = QSize(711, 400)
+        self.liveViewSize = QSize(WEBCAM_WIDTH_PX, WEBCAM_HEIGHT_PX)
         self.refreshTimout = 50
         self.setupWebcam()
 
@@ -89,6 +110,7 @@ class BoothUI(QWidget):
 
 
     def initObjects(self):
+        self.printDim = Dimensions()
         self.liveViewIcon = {
             "title": "",
             "pic":   QIcon("liveview.png"),
@@ -177,10 +199,24 @@ class BoothUI(QWidget):
             # temporary directory. When this is created, it is sent to the
             # printer via popen2.popen4
             selectedImage = self.pictureList[selectedImageID]
-            c = canvas.Canvas('print.pdf')
-            c.drawImage(selectedImage['path'], 0, 0, 10*cm, 10*cm)
-            c.showPage()
-            c.save()
+            generatedPDF = generatePDFsingle(selectedImage)
+
+
+    def generatePDFsingle(self, image):
+        """ Generate a PDF with a single image. """
+        # create the PDF
+        pdfPath = PRINTS_PATH + image['base'] + ".pdf"
+        c = canvas.Canvas(pdfPath)
+        c.setPageSize(self.printDim.getPageSize())
+
+        # insert the image
+        c.drawImage(image['path'], 0, 0, self.printDim.width, self.printDim.height)
+
+        # save everything and return file path
+        c.showPage()
+        c.save()
+        return pdfPath
+
 
 if __name__ == "__main__":
     # the GUI
