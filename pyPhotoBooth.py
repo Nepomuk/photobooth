@@ -9,10 +9,6 @@ import subprocess32 as subprocess
 import glob
 import time
 
-# printing
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import mm
-
 # used for the webcam
 import numpy as np
 import cv, cv2
@@ -30,16 +26,17 @@ PRINTS_PATH = "prints/"
 # dimensions
 class Dimensions():
     def __init__(self, parent=None):
-        self.width_raw = 148
-        self.height_raw = 100
-        self.width = self.width_raw * mm
-        self.height = self.height_raw * mm
+        self.width = 148
+        self.height = 100
 
     def getRatio(self):
-        return float(self.width_raw) / self.height_raw
+        return float(self.width) / self.height
 
     def getPageSize(self):
-        return (self.width, self.height)
+        return QSizeF(self.width, self.height)
+
+    def getPageSizeUnit(self):
+        return QPrinter.Millimeter
 
 
 WEBCAM_WIDTH_PX = 740
@@ -126,6 +123,12 @@ class BoothUI(QWidget):
             'countdown3':   "Foto in 3, 2, 1, ...",
             'countdown4':   "Laecheln!",
         }
+
+        self.printerPDF = QPrinter()
+        self.printerPDF.setOutputFormat(QPrinter.PdfFormat)
+        self.printerPDF.setOrientation(QPrinter.Portrait)
+        self.printerPDF.setPaperSize(self.printDim.getPageSize(), self.printDim.getPageSizeUnit())
+        self.printerPDF.setFullPage(True)
 
 
     def setupWebcam(self):
@@ -252,15 +255,18 @@ class BoothUI(QWidget):
         """ Generate a PDF with a single image. """
         # create the PDF
         pdfPath = PRINTS_PATH + image['base'] + ".pdf"
-        c = canvas.Canvas(pdfPath)
-        c.setPageSize(self.printDim.getPageSize())
+        self.printerPDF.setOutputFileName(pdfPath)
 
-        # insert the image
-        c.drawImage(image['path'], 0, 0, self.printDim.width, self.printDim.height)
+        # start the painting process
+        canvas = QPainter()
+        canvas.begin(self.printerPDF)
 
-        # save everything and return file path
-        c.showPage()
-        c.save()
+        # fill the image
+        target = QRectF(0.0, 0.0, canvas.device().width(), canvas.device().height())
+        canvas.drawImage(target, QImage(image['path']))
+
+        # finish the job (i.e.: print)
+        canvas.end()
         return pdfPath
 
 
