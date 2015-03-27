@@ -124,19 +124,11 @@ class BoothUI(QWidget):
             'countdown4':   "Laecheln!",
         }
 
-        # printers = QPrinterInfo.availablePrinters()
-        # for printer in printers:
-        #     print printer.printerName()
-
-        self.printer = QPrinter()
-        self.printer.setOrientation(QPrinter.Portrait)
-        self.printer.setPaperSize(self.printDim.getPageSize(), self.printDim.getPageSizeUnit())
-        self.printer.setFullPage(True)
-
-        self.printerPDF = self.printer
+        self.printerPDF = QPrinter()
+        self.printerPDF.setOrientation(QPrinter.Portrait)
+        self.printerPDF.setPaperSize(self.printDim.getPageSize(), self.printDim.getPageSizeUnit())
+        self.printerPDF.setFullPage(True)
         self.printerPDF.setOutputFormat(QPrinter.PdfFormat)
-
-        self.printer.setPrinterName("Samsung CLX-4195n")
 
 
     def setupWebcam(self):
@@ -251,13 +243,32 @@ class BoothUI(QWidget):
         """ Get the currently selected image and print it. """
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
         if selectedImageID > 0:
-            # The idea is the following: create a pdf that is stored in a
-            # temporary directory. When this is created, it is sent to the
-            # printer via subprocess.Popen
             selectedImage = self.pictureList[selectedImageID]
-            # generatedPDF = self.generatePDFsingle(selectedImage)
             self.printSingle(selectedImage)
-            #subprocess.Popen(['lpr', "-P " + PRINTER_NAME, generatedPDF])
+
+
+    def printSingle(self, image):
+        """ Print a page with a single image. """
+
+        # first, write the image to a PDF, just in case
+        generatePDFsingle(self, image)
+
+        # open the dialog
+        printer = QPrinter()
+        dialog = QPrintDialog(printer, self)
+        if ( dialog.exec_() != QDialog.Accepted ):
+            return
+
+        # start the painting process
+        canvas = QPainter()
+        canvas.begin(printer)
+
+        # fill the image
+        target = QRectF(0.0, 0.0, canvas.device().width(), canvas.device().height())
+        canvas.drawImage(target, QImage(image['path']))
+
+        # finish the job (i.e.: print)
+        canvas.end()
 
 
     def generatePDFsingle(self, image):
@@ -277,27 +288,6 @@ class BoothUI(QWidget):
         # finish the job (i.e.: print)
         canvas.end()
         return pdfPath
-
-
-    def printSingle(self, image):
-        """ Print a page with a single image. """
-
-        # open the dialog
-        printer = QPrinter()
-        dialog = QPrintDialog(printer, self)
-        if ( dialog.exec_() != QDialog.Accepted ):
-            return
-
-        # start the painting process
-        canvas = QPainter()
-        canvas.begin(printer)
-
-        # fill the image
-        target = QRectF(0.0, 0.0, canvas.device().width(), canvas.device().height())
-        canvas.drawImage(target, QImage(image['path']))
-
-        # finish the job (i.e.: print)
-        canvas.end()
 
 
 if __name__ == "__main__":
