@@ -251,10 +251,10 @@ class BoothUI(QWidget):
         """ Print a page with a single image. """
 
         # first, write the image to a PDF, just in case
-        generatePDFsingle(self, image)
+        self.generatePDFsingle(image)
 
         # open the dialog
-        printer = QPrinter()
+        printer = QPrinter(QPrinter.HighResolution)
         dialog = QPrintDialog(printer, self)
         if ( dialog.exec_() != QDialog.Accepted ):
             return
