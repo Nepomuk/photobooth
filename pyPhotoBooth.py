@@ -41,7 +41,6 @@ class Dimensions():
 
 WEBCAM_WIDTH_PX = 740
 WEBCAM_HEIGHT_PX = 500
-PRINTER_NAME = "Samsung_CLX_4195n"
 
 # some states the UI can be in
 S_LIVEVIEW = 'liveView'
@@ -105,7 +104,7 @@ class BoothUI(QWidget):
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
         # print the selected image
-        self.ui.pushButton_print.clicked.connect(self.printImage)
+        self.ui.pushButton_print.clicked.connect(self.printSelectedImage)
 
 
     def initObjects(self):
@@ -239,19 +238,19 @@ class BoothUI(QWidget):
                 self.camRefresh.start(self.refreshTimout)
 
 
-    def printImage(self):
+    def printSelectedImage(self):
         """ Get the currently selected image and print it. """
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
         if selectedImageID > 0:
             selectedImage = self.pictureList[selectedImageID]
-            self.printSingle(selectedImage)
+            self.printImage(selectedImage)
 
 
-    def printSingle(self, image):
+    def printImage(self, image):
         """ Print a page with a single image. """
 
         # first, write the image to a PDF, just in case
-        self.generatePDFsingle(image)
+        self.printToPDF(image)
 
         # open the dialog
         printer = QPrinter(QPrinter.HighResolution)
@@ -271,7 +270,7 @@ class BoothUI(QWidget):
         canvas.end()
 
 
-    def generatePDFsingle(self, image):
+    def printToPDF(self, image):
         """ Generate a PDF with a single image. """
         # create the PDF
         pdfPath = PRINTS_PATH + image['base'] + ".pdf"
