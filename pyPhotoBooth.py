@@ -92,7 +92,6 @@ class BoothUI(QWidget):
 
         # init the webcam
         self.liveViewSize = QSize(WEBCAM_WIDTH_PX, WEBCAM_HEIGHT_PX)
-        self.refreshTimout = 50
         self.setupWebcam()
 
         # quit shortcut & button
@@ -133,7 +132,7 @@ class BoothUI(QWidget):
 
         self.countDownTimer = QTimer()
         self.countDownTimer.timeout.connect(self.singleCountDown)
-        self.countDownTimeout = 1000
+        self.countDownTimer.setInterval(1000)
 
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
@@ -150,7 +149,8 @@ class BoothUI(QWidget):
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayWebcamStream)
-        self.camRefresh.start(self.refreshTimout)
+        self.camRefresh.setInterval(50)
+        self.camRefresh.start()
 
 
     def captureFrame(self):
@@ -213,7 +213,7 @@ class BoothUI(QWidget):
         self.updatePictureList()
 
         # get the live feed running again
-        self.camRefresh.start(self.refreshTimout)
+        self.camRefresh.start()
 
 
     def startPictureProcess(self):
@@ -226,13 +226,12 @@ class BoothUI(QWidget):
         """ Make a single shot including countdown. """
         self.countDownValue = 3
         self.singleCountDown()
-        self.countDownTimer.start(self.countDownTimeout)
+        self.countDownTimer.start()
 
 
     def singleCountDown(self):
         newTitle = self.title['countdown'][self.countDownValue]
         self.ui.label_title.setText(newTitle)
-        print self.countDownValue
 
         if self.countDownValue > 0:
             self.countDownValue = self.countDownValue - 1
@@ -271,7 +270,7 @@ class BoothUI(QWidget):
         else:
             # reactivate the live feed
             if not self.camRefresh.isActive():
-                self.camRefresh.start(self.refreshTimout)
+                self.camRefresh.start()
 
 
     def printSelectedImage(self):
