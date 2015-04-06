@@ -53,16 +53,25 @@ M_SINGLE = 's'
 M_MULTI = 'm'
 
 
-def getFilePath(seriesFolder = ""):
+def getFilePath(pictureMode, seriesFolder = "", composedImage = False):
     """ Generate a file name for the picture. """
     currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
-    basename = currentTimeString + "_" + ("single" if seriesFolder == "" else "series")
+    basename = currentTimeString
+    if pictureMode == M_SINGLE:
+        suffix = "_single"
+    elif pictureMode == M_MULTI:
+        if not composedImage:
+            suffix = "_partial"
+        else:
+            suffix = "_series"
+            basename = seriesFolder
     extension = ".jpg"
+    filename = basename + suffix + extension
 
-    if seriesFolder == "":
-        filepath = PICTURE_PATH + basename + extension
+    if pictureMode == M_MULTI and not composedImage:
+        filepath = SERIES_PATH + seriesFolder + '/' + filename
     else:
-        filepath = SERIES_PATH + seriesFolder + '/' + basename + extension
+        filepath = PICTURE_PATH + filename
 
     return filepath
 
@@ -248,7 +257,7 @@ class BoothUI(QWidget):
 
         # now take a picture
         frame = self.captureFrame()
-        # cv2.imwrite(getFilePath(self.multiShotFolder), frame)
+        cv2.imwrite(getFilePath(self.ui.currentMode, self.multiShotFolder), frame)
 
 
         # things required for multiple shots
@@ -263,11 +272,11 @@ class BoothUI(QWidget):
                 self.countDownValue = 2
                 self.shotCountDown()
                 self.countDownTimer.start()
-            # else:
-            #     self.buildMultiShotImage()
+            else:
+                self.buildMultiShotImage()
 
-        else:
-            # update picture list and select the most recent one
+        # update picture list and select the most recent one
+        if not (self.ui.currentMode == M_MULTI and self.multiShotCount < 4):
             self.updatePictureList()
             self.ui.listWidget_lastPictures.setCurrentRow(1)
             self.displayImage()
@@ -294,6 +303,53 @@ class BoothUI(QWidget):
         else:
             self.countDownTimer.stop()
             QTimer.singleShot(500, self.takeImage)
+
+
+    def buildMultiShotImage(self):
+        """ Combine the 4 taken images into one single picture. """
+
+        # get a sorted list of files
+        seriesPath = SERIES_PATH + self.multiShotFolder + '/'
+        pictureFiles = filter(os.path.isfile, glob.glob(seriesPath + "*.jpg"))
+        pictureFiles.sort(key=lambda x: os.path.getctime(x))
+
+        # create the base of the image
+        pictureSize = QImage(pictureFiles[0]).size()
+        spacing = pictureSize.height() / 42
+        image = QImage(pictureSize.width() + 3*spacing, pictureSize.height() + 3*spacing, QImage.Format_RGB32)
+        image.fill(Qt.white)
+
+        # use a QPainter to place the other images inside
+        canvas = QPainter()
+        canvas.begin(image)
+
+        if len(pictureFiles) > 0:
+            target = QRectF(
+                spacing, spacing,
+                pictureSize.width()/2, pictureSize.height()/2
+            )
+            canvas.drawImage(target, QImage(pictureFiles[0]))
+        if len(pictureFiles) > 1:
+            target = QRectF(
+                pictureSize.width()/2 + 2*spacing, spacing,
+                pictureSize.width()/2, pictureSize.height()/2
+            )
+            canvas.drawImage(target, QImage(pictureFiles[1]))
+        if len(pictureFiles) > 2:
+            target = QRectF(
+                spacing, pictureSize.height()/2 + 2*spacing,
+                pictureSize.width()/2, pictureSize.height()/2
+            )
+            canvas.drawImage(target, QImage(pictureFiles[2]))
+        if len(pictureFiles) > 3:
+            target = QRectF(
+                pictureSize.width()/2 + 2*spacing, pictureSize.height()/2 + 2*spacing,
+                pictureSize.width()/2, pictureSize.height()/2
+            )
+            canvas.drawImage(target, QImage(pictureFiles[3]))
+
+        canvas.end()
+        image.save(getFilePath(M_MULTI, self.multiShotFolder, True), "JPG", 92)
 
 
     def updatePictureList(self):
