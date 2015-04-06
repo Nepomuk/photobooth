@@ -128,15 +128,19 @@ class BoothUI(QWidget):
 
         # toggle mode
         self.ui.pushButton_switchMode.clicked.connect(self.toggleMode)
+        scMode = QShortcut(QKeySequence(Qt.Key_M), self, self.toggleMode)
 
         # take an image
         self.ui.pushButton_main.clicked.connect(self.startMainAction)
+        scMain = QShortcut(QKeySequence(Qt.Key_Space), self, self.startMainAction)
+        scMain2 = QShortcut(QKeySequence(Qt.Key_B), self, self.startMainAction)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
         # delete an image
         self.ui.pushButton_delete.clicked.connect(self.deleteSelectedImage)
+        scDelete = QShortcut(QKeySequence(Qt.Key_L), self, self.deleteSelectedImage)
 
 
     def initObjects(self):
