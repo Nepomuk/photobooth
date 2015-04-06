@@ -5,6 +5,7 @@
 
 # general libraries
 import sys, os
+import tempfile
 import subprocess32 as subprocess
 import glob
 import time
@@ -22,6 +23,8 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
 
+# should we use the webcam instead of the camera?
+USE_WEBCAM = False
 
 # paths to generated files
 DELETED_PATH = "deleted/"
@@ -120,9 +123,11 @@ class BoothUI(QWidget):
         # display the latest pictures
         self.updatePictureList()
 
-        # init the webcam
-        # self.setupWebcam()
-        self.setupCamera()
+        # init the webcam / camera
+        if USE_WEBCAM:
+            self.setupWebcam()
+        else:
+            self.setupCamera()
 
         # quit shortcut & button
         quit_action = QAction('Quit', self)
@@ -214,6 +219,8 @@ class BoothUI(QWidget):
 
     def setupCamera(self):
         """ Initialize the camera and get regular preview pictures. """
+        self.camPreviewFile = tempfile.NamedTemporaryFile()
+        print self.camPreviewFile.name
         self.camera = piggyphoto.Camera()
         self.camera.leave_locked()
 
@@ -221,20 +228,28 @@ class BoothUI(QWidget):
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayCameraPreview)
-        self.camRefresh.setInterval(50)
+        self.camRefresh.setInterval(100)
         self.camRefresh.start()
 
 
     def displayCameraPreview(self):
         """ Read frame from camera and repaint QLabel widget. """
-        self.camera.capture_preview('preview.jpg')
-        image = QImage('preview.jpg')
+        preview = self.camera.capture_preview()
+        self.camPreviewFile.write(preview.to_pixbuf())
+        self.camPreviewFile.seek(0) # put the pointer at the beginning
+
+        # load from temporary file
+        image = QImage(self.camPreviewFile.name)
 
         # scale the image down if necessary
         pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
 
         # set image
         self.ui.label_pictureView.setPixmap(pixmap)
+
+        # free unused memory (not tested if this works)
+        del image
+        del pixmap
 
 
     def captureFrame(self):
@@ -311,9 +326,12 @@ class BoothUI(QWidget):
 
         # now take a picture
         filePath = getFilePath(self.ui.currentMode, self.multiShotFolder)
-        frame = self.captureFrame()
-        frame = cv2.flip(frame, 1)
-        cv2.imwrite(filePath, frame)
+        if USE_WEBCAM:
+            frame = self.captureFrame()
+            frame = cv2.flip(frame, 1)
+            cv2.imwrite(filePath, frame)
+        else:
+            self.camera.capture_image(filePath)
 
         # things required for multiple shots
         if self.ui.currentMode == M_MULTI:
