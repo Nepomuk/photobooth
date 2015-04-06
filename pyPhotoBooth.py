@@ -20,6 +20,7 @@ from photoBoothUI import Ui_photoBooth
 
 
 # paths to generated files
+DELETED_PATH = "deleted/"
 PICTURE_PATH = "pictures/"
 PRINTS_PATH = "prints/"
 SERIES_PATH = "series/"
@@ -130,13 +131,12 @@ class BoothUI(QWidget):
 
         # take an image
         self.ui.pushButton_main.clicked.connect(self.startMainAction)
-        # self.ui.pushButton_capture.clicked.connect(self.startPictureProcess)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
-        # print the selected image
-        # self.ui.pushButton_print.clicked.connect(self.printSelectedImage)
+        # delete an image
+        self.ui.pushButton_delete.clicked.connect(self.deleteSelectedImage)
 
 
     def initObjects(self):
@@ -401,6 +401,8 @@ class BoothUI(QWidget):
             # (Note: It scales the image only once when it loads it.
             #        Resizing the window after that doesn't change scaling.)
             if filePath == "":
+                if selectedImageID >= len(self.pictureList):
+                    selectedImageID = len(self.pictureList) - 1
                 selectedImage = self.pictureList[selectedImageID]
                 selectedImagePixmap = QPixmap(selectedImage['path'])
                 self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
@@ -410,16 +412,18 @@ class BoothUI(QWidget):
             self.ui.currentState = S_DISPLAY
             selectedImagePixmap = self.scaleImageToLabel(selectedImagePixmap)
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
+            self.ui.pushButton_delete.setEnabled(True)
         else:
             # reactivate the live feed
             self.ui.label_title.setText(self.title['liveview'])
+            self.ui.pushButton_delete.setEnabled(False)
             self.ui.currentState = S_LIVEVIEW
             self.camRefresh.start()
         self.adjustMainButton()
 
 
     def printSelectedImage(self):
-        """ Get the currently selected image and print it. """
+        """ Get the currently selected image and delete it (i.e. move somewhere). """
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
         if selectedImageID > 0:
             selectedImage = self.pictureList[selectedImageID]
@@ -467,6 +471,25 @@ class BoothUI(QWidget):
         # finish the job (i.e.: print)
         canvas.end()
         return pdfPath
+
+
+    def deleteSelectedImage(self):
+        """ Get the currently selected image and print it. """
+        selectedImageID = self.ui.listWidget_lastPictures.currentRow()
+        if selectedImageID > 0:
+            selectedImage = self.pictureList[selectedImageID]
+
+            # move the file into the deleted folder
+            oldPath = selectedImage['path']
+            newPath = oldPath.replace(PICTURE_PATH, DELETED_PATH)
+            os.rename(oldPath, newPath)
+
+            # update the picture list and show the next image
+            self.updatePictureList()
+            if selectedImageID >= len(self.pictureList):
+                selectedImageID = len(self.pictureList)-1
+            self.ui.listWidget_lastPictures.setCurrentRow(selectedImageID)
+            self.displayImage()
 
 
 if __name__ == "__main__":

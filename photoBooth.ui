@@ -212,6 +212,7 @@
        </property>
        <property name="font">
         <font>
+         <pointsize>16</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -219,15 +220,13 @@
        <property name="styleSheet">
         <string notr="true">QPushButton {
 color: white;
-font-weight: 600;
-
-background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(255, 72, 72, 255), stop:1 rgba(198, 43, 43, 255));
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(255, 72, 72, 255), stop:1 rgba(215, 47, 47, 255));
 border: 2px solid rgb(246, 94, 94);
 border-radius: 20px;
 }
 
 QPushButton:pressed {
-background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(159, 45, 45, 255), stop:1 rgba(128, 28, 28, 255));
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(190, 54, 54, 255), stop:1 rgba(166, 36, 36, 255));
 padding-top: 2px;
 }
 
@@ -283,7 +282,13 @@ border-color: rgb(255, 179, 179);
         </size>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(229, 76, 77);</string>
+        <string notr="true">QPushButton {
+color: rgb(229, 76, 77);
+}
+
+QPushButton:disabled {
+color: rgb(255, 170, 170)
+}</string>
        </property>
        <property name="text">
         <string>Löschen</string>
