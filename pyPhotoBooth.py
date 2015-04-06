@@ -139,7 +139,7 @@ class BoothUI(QWidget):
         self.ui.currentMode = M_SINGLE
 
         self.countDownTimer = QTimer()
-        self.countDownTimer.timeout.connect(self.singleCountDown)
+        self.countDownTimer.timeout.connect(self.shotCountDown)
         self.countDownTimer.setInterval(1000)
 
         self.printerPDF = QPrinter()
@@ -233,26 +233,39 @@ class BoothUI(QWidget):
         frame = self.captureFrame()
         # cv2.imwrite(getFileName(), frame)
 
-        # update picture list and select the most recent one
-        self.updatePictureList()
-        self.ui.listWidget_lastPictures.setCurrentRow(1)
-        self.displayImage()
+
+        # things required for multiple shots
+        if self.ui.currentMode == M_MULTI:
+            self.multiShotCount = self.multiShotCount + 1
+
+            # not finished yet, repeat
+            if self.multiShotCount < 3:
+                # keep the liveview running for now
+                self.camRefresh.start()
+
+                self.countDownValue = 2
+                self.shotCountDown()
+                self.countDownTimer.start()
+            # else:
+                # self.buildMultiShotImage
+
+        else:
+            # update picture list and select the most recent one
+            self.updatePictureList()
+            self.ui.listWidget_lastPictures.setCurrentRow(1)
+            self.displayImage()
 
 
     def startPictureProcess(self):
         """ Starts the process taking pichture(s) depending on the set mode. """
-        if self.ui.currentMode == M_SINGLE:
-            self.singleShot()
-
-
-    def singleShot(self):
-        """ Make a single shot including countdown. """
+        if self.ui.currentMode == M_MULTI:
+            self.multiShotCount = 0
         self.countDownValue = 3
-        self.singleCountDown()
+        self.shotCountDown()
         self.countDownTimer.start()
 
 
-    def singleCountDown(self):
+    def shotCountDown(self):
         newTitle = self.title['countdown'][self.countDownValue]
         self.ui.label_title.setText(newTitle)
 
