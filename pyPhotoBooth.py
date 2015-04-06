@@ -22,6 +22,7 @@ from photoBoothUI import Ui_photoBooth
 # paths to generated files
 PICTURE_PATH = "pictures/"
 PRINTS_PATH = "prints/"
+SERIES_PATH = "series/"
 
 # dimensions
 class Dimensions():
@@ -52,12 +53,27 @@ M_SINGLE = 's'
 M_MULTI = 'm'
 
 
-def getFileName(singlePicture = True):
+def getFilePath(seriesFolder = ""):
     """ Generate a file name for the picture. """
     currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
-    basename = currentTimeString + "_" + ("single" if singlePicture else "series")
+    basename = currentTimeString + "_" + ("single" if seriesFolder == "" else "series")
     extension = ".jpg"
-    return PICTURE_PATH + basename + extension
+
+    if seriesFolder == "":
+        filepath = PICTURE_PATH + basename + extension
+    else:
+        filepath = SERIES_PATH + seriesFolder + '/' + basename + extension
+
+    return filepath
+
+
+def getSeriesFolder():
+    """ Generate a folder name for the picture series. """
+    currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
+    seriesPath = SERIES_PATH + currentTimeString
+    if not os.path.exists(seriesPath):
+        os.makedirs(seriesPath)
+    return currentTimeString
 
 
 def getPictureList():
@@ -137,6 +153,7 @@ class BoothUI(QWidget):
         }
         self.ui.currentState = S_LIVEVIEW
         self.ui.currentMode = M_SINGLE
+        self.multiShotFolder = ""
 
         self.countDownTimer = QTimer()
         self.countDownTimer.timeout.connect(self.shotCountDown)
@@ -155,6 +172,7 @@ class BoothUI(QWidget):
         if self.ui.currentMode == M_SINGLE:
             self.ui.currentMode = M_MULTI
         else:
+            self.multiShotFolder = ""
             self.ui.currentMode = M_SINGLE
 
         # update the UI
@@ -220,7 +238,6 @@ class BoothUI(QWidget):
 
         # set image and labels
         self.ui.label_pictureView.setPixmap(pixmap)
-        # self.ui.label_title.setText(self.title['liveview'])
         self.ui.pushButton_print.setEnabled(False)
 
 
@@ -231,7 +248,7 @@ class BoothUI(QWidget):
 
         # now take a picture
         frame = self.captureFrame()
-        # cv2.imwrite(getFileName(), frame)
+        # cv2.imwrite(getFilePath(self.multiShotFolder), frame)
 
 
         # things required for multiple shots
@@ -239,7 +256,7 @@ class BoothUI(QWidget):
             self.multiShotCount = self.multiShotCount + 1
 
             # not finished yet, repeat
-            if self.multiShotCount < 3:
+            if self.multiShotCount < 4:
                 # keep the liveview running for now
                 self.camRefresh.start()
 
@@ -247,7 +264,7 @@ class BoothUI(QWidget):
                 self.shotCountDown()
                 self.countDownTimer.start()
             # else:
-                # self.buildMultiShotImage
+            #     self.buildMultiShotImage()
 
         else:
             # update picture list and select the most recent one
@@ -258,8 +275,11 @@ class BoothUI(QWidget):
 
     def startPictureProcess(self):
         """ Starts the process taking pichture(s) depending on the set mode. """
+        # prepare the picture series
         if self.ui.currentMode == M_MULTI:
             self.multiShotCount = 0
+            self.multiShotFolder = getSeriesFolder()
+
         self.countDownValue = 3
         self.shotCountDown()
         self.countDownTimer.start()

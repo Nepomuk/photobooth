@@ -8,3 +8,6 @@ piggyphoto/
 # skip the taken pictures folder
 pictures/
 prints/
+
+# added by GitSavvy
+/series/
