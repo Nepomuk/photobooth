@@ -257,8 +257,8 @@ class BoothUI(QWidget):
 
         # now take a picture
         frame = self.captureFrame()
-        cv2.imwrite(getFilePath(self.ui.currentMode, self.multiShotFolder), frame)
-
+        filePath = getFilePath(self.ui.currentMode, self.multiShotFolder)
+        cv2.imwrite(filePath, frame)
 
         # things required for multiple shots
         if self.ui.currentMode == M_MULTI:
@@ -266,8 +266,7 @@ class BoothUI(QWidget):
 
             # not finished yet, repeat
             if self.multiShotCount < 4:
-                # keep the liveview running for now
-                self.camRefresh.start()
+                self.displayImage(filePath)
 
                 self.countDownValue = 2
                 self.shotCountDown()
@@ -363,10 +362,10 @@ class BoothUI(QWidget):
             newItem = QListWidgetItem(p['pic'], p['title'], self.ui.listWidget_lastPictures)
 
 
-    def displayImage(self):
+    def displayImage(self, filePath = ""):
         """ Get the currently selected image and display it. """
         selectedImageID = self.ui.listWidget_lastPictures.currentRow()
-        if selectedImageID > 0:
+        if selectedImageID > 0 or filePath != "":
             # first, stop the live feed
             self.camRefresh.stop()
             self.ui.pushButton_print.setEnabled(True)
@@ -374,11 +373,14 @@ class BoothUI(QWidget):
             # load the image and display it
             # (Note: It scales the image only once when it loads it.
             #        Resizing the window after that doesn't change scaling.)
-            selectedImage = self.pictureList[selectedImageID]
-            selectedImagePixmap = QPixmap(selectedImage['path'])
+            if filePath == "":
+                selectedImage = self.pictureList[selectedImageID]
+                selectedImagePixmap = QPixmap(selectedImage['path'])
+                self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
+            else:
+                selectedImagePixmap = QPixmap(filePath)
             selectedImagePixmap = self.scaleImageToLabel(selectedImagePixmap)
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
-            self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
         else:
             # reactivate the live feed
             self.ui.label_title.setText(self.title['liveview'])
