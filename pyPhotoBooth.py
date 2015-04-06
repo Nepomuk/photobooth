@@ -256,8 +256,9 @@ class BoothUI(QWidget):
         self.camRefresh.stop()
 
         # now take a picture
-        frame = self.captureFrame()
         filePath = getFilePath(self.ui.currentMode, self.multiShotFolder)
+        frame = self.captureFrame()
+        frame = cv2.flip(frame, 1)
         cv2.imwrite(filePath, frame)
 
         # things required for multiple shots
