@@ -48,8 +48,8 @@ S_COUNTDOWN = 'countdown'
 S_COUNTDOWN_MULTI = 'countdown_multi'
 S_DISPLAY = 'displayImage'
 
-M_SINGLE = 'single'
-M_MULTI = 'multi'
+M_SINGLE = 's'
+M_MULTI = 'm'
 
 
 def getFileName(singlePicture = True):
@@ -100,6 +100,9 @@ class BoothUI(QWidget):
         quit_action.triggered.connect(qApp.closeAllWindows)
         self.addAction(quit_action)
 
+        # toggle mode
+        self.ui.pushButton_switchMode.clicked.connect(self.toggleMode)
+
         # take an image
         self.ui.pushButton_capture.clicked.connect(self.startPictureProcess)
 
@@ -127,6 +130,11 @@ class BoothUI(QWidget):
                 "Foto in 3, ..."
             ]
         }
+        self.modeTitle = { 's': "Einzelbild", 'm': "Bilderserie" }
+        self.modeIcon = {
+            's': QPixmap(":/icon/graphics/picture_single.png"),
+            'm': QPixmap(":/icon/graphics/picture_multi.png")
+        }
         self.ui.currentState = S_LIVEVIEW
         self.ui.currentMode = M_SINGLE
 
@@ -139,6 +147,19 @@ class BoothUI(QWidget):
         self.printerPDF.setPaperSize(self.printDim.getPageSize(), self.printDim.getPageSizeUnit())
         self.printerPDF.setFullPage(True)
         self.printerPDF.setOutputFormat(QPrinter.PdfFormat)
+
+
+    def toggleMode(self):
+        """ Toggle the mode between single and multiple photos """
+        # switch mode
+        if self.ui.currentMode == M_SINGLE:
+            self.ui.currentMode = M_MULTI
+        else:
+            self.ui.currentMode = M_SINGLE
+
+        # update the UI
+        self.ui.label_captureMode.setText(self.modeTitle[self.ui.currentMode])
+        self.ui.label_captureModeIcon.setPixmap(self.modeIcon[self.ui.currentMode])
 
 
     def setupWebcam(self):

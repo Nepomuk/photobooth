@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icon">
+    <file>graphics/picture_multi.png</file>
+    <file>graphics/picture_single.png</file>
     <file>graphics/trash.png</file>
     <file>graphics/camera.png</file>
     <file>graphics/liveview.png</file>
