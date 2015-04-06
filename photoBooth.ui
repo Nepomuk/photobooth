@@ -197,22 +197,39 @@
       <widget class="QPushButton" name="pushButton_main">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>100</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
          <height>40</height>
         </size>
        </property>
        <property name="font">
         <font>
+         <pointsize>-1</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: white;
+font-size: 16px;
+font-weight: 600;
+
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(255, 72, 72, 255), stop:1 rgba(198, 43, 43, 255));
+border: 2px solid rgb(246, 94, 94);
+border-radius: 20px;
+</string>
        </property>
        <property name="text">
         <string>Foto!</string>
        </property>
        <property name="icon">
         <iconset resource="photoBooth.qrc">
-         <normaloff>:/icon/graphics/camera.png</normaloff>:/icon/graphics/camera.png</iconset>
+         <normaloff>:/icon/graphics/camera_white.png</normaloff>:/icon/graphics/camera_white.png</iconset>
        </property>
        <property name="iconSize">
         <size>

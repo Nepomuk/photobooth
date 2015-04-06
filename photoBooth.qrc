@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icon">
+    <file>graphics/camera_white.png</file>
+    <file>graphics/printer_white.png</file>
     <file>graphics/picture_multi.png</file>
     <file>graphics/picture_single.png</file>
     <file>graphics/trash.png</file>

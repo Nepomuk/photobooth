@@ -258,11 +258,11 @@ class BoothUI(QWidget):
         icon = QIcon()
         if self.ui.currentState == S_LIVEVIEW:
             self.ui.pushButton_main.setText("Foto!")
-            icon.addPixmap(QPixmap(":/icon/graphics/camera.png"), QIcon.Normal, QIcon.Off)
+            icon.addPixmap(QPixmap(":/icon/graphics/camera_white.png"), QIcon.Normal, QIcon.Off)
             self.ui.pushButton_main.setIcon(icon)
         elif self.ui.currentState == S_DISPLAY:
             self.ui.pushButton_main.setText("Drucken")
-            icon.addPixmap(QPixmap(":/icon/graphics/printer.png"), QIcon.Normal, QIcon.Off)
+            icon.addPixmap(QPixmap(":/icon/graphics/printer_white.png"), QIcon.Normal, QIcon.Off)
             self.ui.pushButton_main.setIcon(icon)
 
 
