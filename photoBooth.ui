@@ -194,7 +194,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_capture">
+      <widget class="QPushButton" name="pushButton_main">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -240,32 +240,6 @@
         </size>
        </property>
       </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_print">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Drucken</string>
-       </property>
-       <property name="icon">
-        <iconset resource="photoBooth.qrc">
-         <normaloff>:/icon/graphics/printer.png</normaloff>:/icon/graphics/printer.png</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pushButton_delete">

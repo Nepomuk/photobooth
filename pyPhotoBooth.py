@@ -129,13 +129,14 @@ class BoothUI(QWidget):
         self.ui.pushButton_switchMode.clicked.connect(self.toggleMode)
 
         # take an image
-        self.ui.pushButton_capture.clicked.connect(self.startPictureProcess)
+        self.ui.pushButton_main.clicked.connect(self.startMainAction)
+        # self.ui.pushButton_capture.clicked.connect(self.startPictureProcess)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
 
         # print the selected image
-        self.ui.pushButton_print.clicked.connect(self.printSelectedImage)
+        # self.ui.pushButton_print.clicked.connect(self.printSelectedImage)
 
 
     def initObjects(self):
@@ -173,6 +174,8 @@ class BoothUI(QWidget):
         self.printerPDF.setPaperSize(self.printDim.getPageSize(), self.printDim.getPageSizeUnit())
         self.printerPDF.setFullPage(True)
         self.printerPDF.setOutputFormat(QPrinter.PdfFormat)
+
+        self.adjustMainButton()
 
 
     def toggleMode(self):
@@ -247,7 +250,28 @@ class BoothUI(QWidget):
 
         # set image and labels
         self.ui.label_pictureView.setPixmap(pixmap)
-        self.ui.pushButton_print.setEnabled(False)
+        # self.ui.pushButton_print.setEnabled(False)
+
+
+    def adjustMainButton(self):
+        """ Depending on the current state, modify the main button. """
+        icon = QIcon()
+        if self.ui.currentState == S_LIVEVIEW:
+            self.ui.pushButton_main.setText("Foto!")
+            icon.addPixmap(QPixmap(":/icon/graphics/camera.png"), QIcon.Normal, QIcon.Off)
+            self.ui.pushButton_main.setIcon(icon)
+        elif self.ui.currentState == S_DISPLAY:
+            self.ui.pushButton_main.setText("Drucken")
+            icon.addPixmap(QPixmap(":/icon/graphics/printer.png"), QIcon.Normal, QIcon.Off)
+            self.ui.pushButton_main.setIcon(icon)
+
+
+    def startMainAction(self):
+        """ Depending on the current state, take a picture or print. """
+        if self.ui.currentState == S_LIVEVIEW:
+            self.startPictureProcess()
+        elif self.ui.currentState == S_DISPLAY:
+            self.printSelectedImage()
 
 
     def takeImage(self):
@@ -277,6 +301,7 @@ class BoothUI(QWidget):
 
         # update picture list and select the most recent one
         if not (self.ui.currentMode == M_MULTI and self.multiShotCount < 4):
+            self.ui.pushButton_main.setEnabled(True)
             self.updatePictureList()
             self.ui.listWidget_lastPictures.setCurrentRow(1)
             self.displayImage()
@@ -284,6 +309,8 @@ class BoothUI(QWidget):
 
     def startPictureProcess(self):
         """ Starts the process taking pichture(s) depending on the set mode. """
+        self.ui.pushButton_main.setEnabled(False)
+
         # prepare the picture series
         if self.ui.currentMode == M_MULTI:
             self.multiShotCount = 0
@@ -369,7 +396,6 @@ class BoothUI(QWidget):
         if selectedImageID > 0 or filePath != "":
             # first, stop the live feed
             self.camRefresh.stop()
-            self.ui.pushButton_print.setEnabled(True)
 
             # load the image and display it
             # (Note: It scales the image only once when it loads it.
@@ -380,12 +406,16 @@ class BoothUI(QWidget):
                 self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
             else:
                 selectedImagePixmap = QPixmap(filePath)
+
+            self.ui.currentState = S_DISPLAY
             selectedImagePixmap = self.scaleImageToLabel(selectedImagePixmap)
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
         else:
             # reactivate the live feed
             self.ui.label_title.setText(self.title['liveview'])
+            self.ui.currentState = S_LIVEVIEW
             self.camRefresh.start()
+        self.adjustMainButton()
 
 
     def printSelectedImage(self):
