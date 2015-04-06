@@ -129,7 +129,7 @@
      <item>
       <widget class="QPushButton" name="pushButton_switchMode">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="minimumSize">
         <size>
@@ -238,6 +238,35 @@
         <size>
          <width>20</width>
          <height>20</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_delete">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(229, 76, 77);</string>
+       </property>
+       <property name="text">
+        <string>Löschen</string>
+       </property>
+       <property name="icon">
+        <iconset resource="photoBooth.qrc">
+         <normaloff>:/icon/graphics/trash.png</normaloff>:/icon/graphics/trash.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>18</width>
+         <height>18</height>
         </size>
        </property>
       </widget>
