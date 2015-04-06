@@ -44,7 +44,12 @@ WEBCAM_HEIGHT_PX = 500
 
 # some states the UI can be in
 S_LIVEVIEW = 'liveView'
+S_COUNTDOWN = 'countdown'
+S_COUNTDOWN_MULTI = 'countdown_multi'
 S_DISPLAY = 'displayImage'
+
+M_SINGLE = 'single'
+M_MULTI = 'multi'
 
 
 def getFileName(singlePicture = True):
@@ -80,7 +85,6 @@ class BoothUI(QWidget):
         QWidget.__init__(self, parent)
         self.ui = Ui_photoBooth()
         self.ui.setupUi(self)
-        self.ui.currentState = S_LIVEVIEW
         self.initObjects()
 
         # display the latest pictures
@@ -98,7 +102,7 @@ class BoothUI(QWidget):
         self.addAction(quit_action)
 
         # take an image
-        self.ui.pushButton_capture.clicked.connect(self.takeImage)
+        self.ui.pushButton_capture.clicked.connect(self.startPictureProcess)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
@@ -117,11 +121,19 @@ class BoothUI(QWidget):
         self.title = {
             'liveview':     "Vorschau",
             'display':      "Bild von {0}",
-            'countdown1':   "Foto in 3, ...",
-            'countdown2':   "Foto in 3, 2, ...",
-            'countdown3':   "Foto in 3, 2, 1, ...",
-            'countdown4':   "Laecheln!",
+            'countdown': [
+                "Laecheln!",
+                "Foto in 3, 2, 1, ...",
+                "Foto in 3, 2, ...",
+                "Foto in 3, ..."
+            ]
         }
+        self.ui.currentState = S_LIVEVIEW
+        self.ui.currentMode = M_SINGLE
+
+        self.countDownTimer = QTimer()
+        self.countDownTimer.timeout.connect(self.singleCountDown)
+        self.countDownTimeout = 1000
 
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
@@ -185,7 +197,7 @@ class BoothUI(QWidget):
 
         # set image and labels
         self.ui.label_pictureView.setPixmap(pixmap)
-        self.ui.label_title.setText(self.title['liveview'])
+        # self.ui.label_title.setText(self.title['liveview'])
         self.ui.pushButton_print.setEnabled(False)
 
 
@@ -193,16 +205,40 @@ class BoothUI(QWidget):
         """ Read frame from camera and repaint QLabel widget. """
         # first, block the webcam stream for a while
         self.camRefresh.stop()
-        self.ui.label_title.setText(self.title['countdown4'])
 
         # now take a picture
         frame = self.captureFrame()
-        cv2.imwrite(getFileName(), frame)
+        # cv2.imwrite(getFileName(), frame)
         # print "Written {0} to disk.".format(getFileName())
         self.updatePictureList()
 
         # get the live feed running again
         self.camRefresh.start(self.refreshTimout)
+
+
+    def startPictureProcess(self):
+        """ Starts the process taking pichture(s) depending on the set mode. """
+        if self.ui.currentMode == M_SINGLE:
+            self.singleShot()
+
+
+    def singleShot(self):
+        """ Make a single shot including countdown. """
+        self.countDownValue = 3
+        self.singleCountDown()
+        self.countDownTimer.start(self.countDownTimeout)
+
+
+    def singleCountDown(self):
+        newTitle = self.title['countdown'][self.countDownValue]
+        self.ui.label_title.setText(newTitle)
+        print self.countDownValue
+
+        if self.countDownValue > 0:
+            self.countDownValue = self.countDownValue - 1
+        else:
+            self.countDownTimer.stop()
+            QTimer.singleShot(500, self.takeImage)
 
 
     def updatePictureList(self):
