@@ -13,6 +13,10 @@ import time
 import numpy as np
 import cv, cv2
 
+sys.path.append('piggyphoto/')
+import piggyphoto
+import gphoto2 as gp
+
 # the UI
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -117,8 +121,8 @@ class BoothUI(QWidget):
         self.updatePictureList()
 
         # init the webcam
-        self.liveViewSize = QSize(WEBCAM_WIDTH_PX, WEBCAM_HEIGHT_PX)
-        self.setupWebcam()
+        # self.setupWebcam()
+        self.setupCamera()
 
         # quit shortcut & button
         quit_action = QAction('Quit', self)
@@ -199,8 +203,6 @@ class BoothUI(QWidget):
     def setupWebcam(self):
         """ Initialize webcam camera and get regular pictures """
         self.capture = cv2.VideoCapture(0)
-        # self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.liveViewSize.width())
-        # self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.liveViewSize.height())
 
         self.ui.label_title.setText(self.title['liveview'])
 
@@ -208,6 +210,31 @@ class BoothUI(QWidget):
         self.camRefresh.timeout.connect(self.displayWebcamStream)
         self.camRefresh.setInterval(50)
         self.camRefresh.start()
+
+
+    def setupCamera(self):
+        """ Initialize the camera and get regular preview pictures. """
+        self.camera = piggyphoto.Camera()
+        self.camera.leave_locked()
+
+        self.ui.label_title.setText(self.title['liveview'])
+
+        self.camRefresh = QTimer()
+        self.camRefresh.timeout.connect(self.displayCameraPreview)
+        self.camRefresh.setInterval(50)
+        self.camRefresh.start()
+
+
+    def displayCameraPreview(self):
+        """ Read frame from camera and repaint QLabel widget. """
+        self.camera.capture_preview('preview.jpg')
+        image = QImage('preview.jpg')
+
+        # scale the image down if necessary
+        pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
+
+        # set image
+        self.ui.label_pictureView.setPixmap(pixmap)
 
 
     def captureFrame(self):
@@ -252,9 +279,8 @@ class BoothUI(QWidget):
         # scale the image down if necessary
         pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
 
-        # set image and labels
+        # set image
         self.ui.label_pictureView.setPixmap(pixmap)
-        # self.ui.pushButton_print.setEnabled(False)
 
 
     def adjustMainButton(self):
