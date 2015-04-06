@@ -195,34 +195,47 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButton_main">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>100</width>
+         <width>120</width>
          <height>40</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>100</width>
+         <width>120</width>
          <height>40</height>
         </size>
        </property>
        <property name="font">
         <font>
-         <pointsize>-1</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: white;
-font-size: 16px;
+        <string notr="true">QPushButton {
+color: white;
 font-weight: 600;
 
 background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(255, 72, 72, 255), stop:1 rgba(198, 43, 43, 255));
 border: 2px solid rgb(246, 94, 94);
 border-radius: 20px;
-</string>
+}
+
+QPushButton:pressed {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(159, 45, 45, 255), stop:1 rgba(128, 28, 28, 255));
+padding-top: 2px;
+}
+
+QPushButton:disabled {
+color: rgb(206, 206, 206);
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0.786, y2:1, stop:0 rgba(255, 169, 169, 255), stop:1 rgba(221, 146, 146, 255));
+border-color: rgb(255, 179, 179);
+}</string>
        </property>
        <property name="text">
         <string>Foto!</string>
