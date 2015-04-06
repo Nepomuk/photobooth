@@ -147,6 +147,8 @@ class BoothUI(QWidget):
         # self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, self.liveViewSize.width())
         # self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, self.liveViewSize.height())
 
+        self.ui.label_title.setText(self.title['liveview'])
+
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayWebcamStream)
         self.camRefresh.setInterval(50)
@@ -209,11 +211,11 @@ class BoothUI(QWidget):
         # now take a picture
         frame = self.captureFrame()
         # cv2.imwrite(getFileName(), frame)
-        # print "Written {0} to disk.".format(getFileName())
-        self.updatePictureList()
 
-        # get the live feed running again
-        self.camRefresh.start()
+        # update picture list and select the most recent one
+        self.updatePictureList()
+        self.ui.listWidget_lastPictures.setCurrentRow(1)
+        self.displayImage()
 
 
     def startPictureProcess(self):
@@ -269,8 +271,8 @@ class BoothUI(QWidget):
             self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
         else:
             # reactivate the live feed
-            if not self.camRefresh.isActive():
-                self.camRefresh.start()
+            self.ui.label_title.setText(self.title['liveview'])
+            self.camRefresh.start()
 
 
     def printSelectedImage(self):
