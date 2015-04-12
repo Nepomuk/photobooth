@@ -226,8 +226,6 @@ class BoothUI(QWidget):
 
     def setupCamera(self):
         """ Initialize the camera and get regular preview pictures. """
-        self.camPreviewFile = tempfile.NamedTemporaryFile()
-        # print self.camPreviewFile.name
         self.camera = piggyphoto.Camera()
         self.camera.leave_locked()
 
@@ -235,7 +233,7 @@ class BoothUI(QWidget):
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayCameraPreview)
-        self.camRefresh.setInterval(100)
+        self.camRefresh.setInterval(1000)
         self.camRefresh.start()
         self.camHibernate.start()
 
@@ -243,15 +241,13 @@ class BoothUI(QWidget):
     def displayCameraPreview(self):
         """ Read frame from camera and repaint QLabel widget. """
         preview = self.camera.capture_preview()
-        self.camPreviewFile.write(preview.to_pixbuf())
-        self.camPreviewFile.seek(0) # put the pointer at the beginning
 
         # load from temporary file
-        image = QImage(self.camPreviewFile.name)
-        # image = QImage("preview.jpg")
+        pixmap = QPixmap()
+        pixmap.loadFromData(preview.to_pixbuf(), "JPG")
 
         # scale the image down if necessary
-        pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
+        pixmap = self.scaleImageToLabel(pixmap)
 
         # set image
         self.ui.label_pictureView.setPixmap(pixmap)
