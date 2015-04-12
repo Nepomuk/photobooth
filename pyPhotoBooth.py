@@ -24,7 +24,7 @@ from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
 
 # should we use the webcam instead of the camera?
-USE_WEBCAM = False
+USE_WEBCAM = True
 
 # paths to generated files
 DELETED_PATH = "deleted/"
@@ -53,6 +53,7 @@ WEBCAM_HEIGHT_PX = 500
 
 # some states the UI can be in
 S_LIVEVIEW = 'liveView'
+S_HIBERNATE = 'hibernate'
 S_COUNTDOWN = 'countdown'
 S_COUNTDOWN_MULTI = 'countdown_multi'
 S_DISPLAY = 'displayImage'
@@ -182,6 +183,10 @@ class BoothUI(QWidget):
         self.countDownTimer.timeout.connect(self.shotCountDown)
         self.countDownTimer.setInterval(1000)
 
+        self.camHibernate = QTimer()
+        self.camHibernate.timeout.connect(self.pauseLiveview)
+        self.camHibernate.setInterval(5000)
+
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
         self.printerPDF.setPaperSize(self.printDim.getPageSize(), self.printDim.getPageSizeUnit())
@@ -216,6 +221,8 @@ class BoothUI(QWidget):
         self.camRefresh.setInterval(50)
         self.camRefresh.start()
 
+        self.camHibernate.start()
+
 
     def setupCamera(self):
         """ Initialize the camera and get regular preview pictures. """
@@ -230,6 +237,7 @@ class BoothUI(QWidget):
         self.camRefresh.timeout.connect(self.displayCameraPreview)
         self.camRefresh.setInterval(100)
         self.camRefresh.start()
+        self.camHibernate.start()
 
 
     def displayCameraPreview(self):
@@ -298,6 +306,18 @@ class BoothUI(QWidget):
         self.ui.label_pictureView.setPixmap(pixmap)
 
 
+    def pauseLiveview(self):
+        """ Pause the live preview for now. """
+        if self.camHibernate.isActive():
+            self.camHibernate.stop()
+            self.camRefresh.stop()
+            self.ui.currentState = S_HIBERNATE
+        else:
+            self.camHibernate.start()
+            self.camRefresh.start()
+            self.ui.currentState = S_LIVEVIEW
+
+
     def adjustMainButton(self):
         """ Depending on the current state, modify the main button. """
         icon = QIcon()
@@ -317,12 +337,15 @@ class BoothUI(QWidget):
             self.startPictureProcess()
         elif self.ui.currentState == S_DISPLAY:
             self.printSelectedImage()
+        elif self.ui.currentState == S_HIBERNATE:
+            self.pauseLiveview()
 
 
     def takeImage(self):
         """ Read frame from camera and repaint QLabel widget. """
         # first, block the webcam stream for a while
         self.camRefresh.stop()
+        self.camHibernate.stop()
 
         # now take a picture
         filePath = getFilePath(self.ui.currentMode, self.multiShotFolder)
@@ -444,6 +467,7 @@ class BoothUI(QWidget):
         if selectedImageID > 0 or filePath != "":
             # first, stop the live feed
             self.camRefresh.stop()
+            self.camHibernate.stop()
 
             # load the image and display it
             # (Note: It scales the image only once when it loads it.
@@ -467,6 +491,7 @@ class BoothUI(QWidget):
             self.ui.pushButton_delete.setEnabled(False)
             self.ui.currentState = S_LIVEVIEW
             self.camRefresh.start()
+            self.camHibernate.start()
         self.adjustMainButton()
 
 
