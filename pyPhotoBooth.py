@@ -24,7 +24,7 @@ from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
 
 # should we use the webcam instead of the camera?
-USE_WEBCAM = True
+USE_WEBCAM = False
 
 # paths to generated files
 DELETED_PATH = "deleted/"
@@ -185,7 +185,7 @@ class BoothUI(QWidget):
 
         self.camHibernate = QTimer()
         self.camHibernate.timeout.connect(self.pauseLiveview)
-        self.camHibernate.setInterval(1000)
+        self.camHibernate.setInterval(1000*3600)
 
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
@@ -227,7 +227,7 @@ class BoothUI(QWidget):
     def setupCamera(self):
         """ Initialize the camera and get regular preview pictures. """
         self.camPreviewFile = tempfile.NamedTemporaryFile()
-        print self.camPreviewFile.name
+        # print self.camPreviewFile.name
         self.camera = piggyphoto.Camera()
         self.camera.leave_locked()
 
@@ -248,6 +248,7 @@ class BoothUI(QWidget):
 
         # load from temporary file
         image = QImage(self.camPreviewFile.name)
+        # image = QImage("preview.jpg")
 
         # scale the image down if necessary
         pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
@@ -256,8 +257,8 @@ class BoothUI(QWidget):
         self.ui.label_pictureView.setPixmap(pixmap)
 
         # free unused memory (not tested if this works)
-        del image
-        del pixmap
+        # del image
+        # del pixmap
 
 
     def captureFrame(self):
