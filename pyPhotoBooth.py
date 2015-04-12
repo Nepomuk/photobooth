@@ -5,8 +5,7 @@
 
 # general libraries
 import sys, os
-import tempfile
-import subprocess32 as subprocess
+import psutil
 import glob
 import time
 
@@ -14,6 +13,7 @@ import time
 import numpy as np
 import cv, cv2
 
+# used for the camera
 sys.path.append('piggyphoto/')
 import piggyphoto
 import gphoto2 as gp
@@ -582,6 +582,11 @@ class BoothUI(QWidget):
 
 
 if __name__ == "__main__":
+    # check, if PTPCamera is running and kill it
+    for proc in psutil.process_iter():
+        if proc.name() == "PTPCamera":
+            proc.kill()
+
     # the GUI
     app = QApplication([])
     myGui = BoothUI()
