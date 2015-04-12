@@ -185,7 +185,7 @@ class BoothUI(QWidget):
 
         self.camHibernate = QTimer()
         self.camHibernate.timeout.connect(self.pauseLiveview)
-        self.camHibernate.setInterval(1000*3600)
+        self.camHibernate.setInterval(2*60*1000)
 
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
@@ -233,7 +233,7 @@ class BoothUI(QWidget):
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayCameraPreview)
-        self.camRefresh.setInterval(1000)
+        self.camRefresh.setInterval(100)
         self.camRefresh.start()
         self.camHibernate.start()
 
@@ -253,8 +253,7 @@ class BoothUI(QWidget):
         self.ui.label_pictureView.setPixmap(pixmap)
 
         # free unused memory (not tested if this works)
-        # del image
-        # del pixmap
+        preview.clean()
 
 
     def captureFrame(self):
