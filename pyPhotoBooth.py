@@ -185,7 +185,7 @@ class BoothUI(QWidget):
 
         self.camHibernate = QTimer()
         self.camHibernate.timeout.connect(self.pauseLiveview)
-        self.camHibernate.setInterval(5000)
+        self.camHibernate.setInterval(1000)
 
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
@@ -311,6 +311,7 @@ class BoothUI(QWidget):
         if self.camHibernate.isActive():
             self.camHibernate.stop()
             self.camRefresh.stop()
+            self.displayHibernateImage()
             self.ui.currentState = S_HIBERNATE
         else:
             self.camHibernate.start()
@@ -493,6 +494,25 @@ class BoothUI(QWidget):
             self.camRefresh.start()
             self.camHibernate.start()
         self.adjustMainButton()
+
+
+    def displayHibernateImage(self):
+        """ Make a black image with a tip how to reactivate the stream. """
+        pixmap = QPixmap(WEBCAM_WIDTH_PX*2, WEBCAM_HEIGHT_PX*2)
+        pixmap.fill(Qt.black)
+
+        canvas = QPainter()
+        canvas.begin(pixmap)
+        canvas.setPen( Qt.white )
+
+        canvasFont = QFont("Helvetica Neue")
+        canvasFont.setPointSize(50)
+        canvas.setFont( canvasFont )
+        canvas.drawText( pixmap.rect(), Qt.AlignCenter, "Vorschau mit Fusstaster oder Leertaste reaktivieren." )
+        canvas.end()
+
+        pixmap = self.scaleImageToLabel(pixmap)
+        self.ui.label_pictureView.setPixmap(pixmap)
 
 
     def printSelectedImage(self):
