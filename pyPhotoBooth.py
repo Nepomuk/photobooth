@@ -158,16 +158,6 @@ class BoothUI(QWidget):
             "pic":   QIcon("graphics/picture_single.png"),
             "path":  "graphics/picture_single.png"
         }
-        self.title = {
-            'liveview':     "Vorschau",
-            'display':      "Bild von {0}",
-            'countdown': [
-                "Laecheln!",
-                "Foto in 3, 2, 1, ...",
-                "Foto in 3, 2, ...",
-                "Foto in 3, ..."
-            ]
-        }
         self.modeTitle = { 's': "Einzelbild", 'm': "Bilderserie" }
         self.modeIcon = {
             's': QPixmap(":/icon/graphics/picture_single.png"),
@@ -214,8 +204,6 @@ class BoothUI(QWidget):
         """ Initialize webcam camera and get regular pictures """
         self.capture = cv2.VideoCapture(0)
 
-        self.ui.label_title.setText(self.title['liveview'])
-
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayWebcamStream)
         self.camRefresh.setInterval(50)
@@ -228,8 +216,6 @@ class BoothUI(QWidget):
         """ Initialize the camera and get regular preview pictures. """
         self.camera = piggyphoto.Camera()
         self.camera.leave_locked()
-
-        self.ui.label_title.setText(self.title['liveview'])
 
         self.camRefresh = QTimer()
         self.camRefresh.timeout.connect(self.displayCameraPreview)
@@ -469,9 +455,6 @@ class BoothUI(QWidget):
 
 
     def shotCountDown(self):
-        newTitle = self.title['countdown'][self.countDownValue]
-        self.ui.label_title.setText(newTitle)
-
         if self.countDownValue > 0:
             self.countDownValue = self.countDownValue - 1
             if self.multiShotLastImage != "":
@@ -557,7 +540,6 @@ class BoothUI(QWidget):
                     selectedImageID = len(self.pictureList) - 1
                 selectedImage = self.pictureList[selectedImageID]
                 selectedImagePixmap = QPixmap(selectedImage['path'])
-                self.ui.label_title.setText(self.title['display'].format(selectedImage['title']))
             else:
                 selectedImagePixmap = QPixmap(filePath)
 
@@ -572,7 +554,6 @@ class BoothUI(QWidget):
             self.ui.pushButton_delete.setEnabled(True)
         else:
             # reactivate the live feed
-            self.ui.label_title.setText(self.title['liveview'])
             self.ui.pushButton_delete.setEnabled(False)
             self.ui.currentState = S_LIVEVIEW
             self.camRefresh.start()
