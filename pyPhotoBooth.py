@@ -295,7 +295,7 @@ class BoothUI(QWidget):
     def overlayCountdown(self, pixmap):
         canvas = QPainter()
         canvas.begin(pixmap)
-        shadowOffset = 1
+        shadowOffset = 2
 
         counterTitle = "Foto in"
         if self.ui.currentMode == M_MULTI:
@@ -311,7 +311,7 @@ class BoothUI(QWidget):
         counterTitleRect = pixmap.rect()
         counterTitleRect.setHeight(pixmap.height()/2)
         counterTitleFont = QFont("Helvetica Neue")
-        counterTitleFont.setPointSize(50)
+        counterTitleFont.setPointSize(100)
         canvas.setFont( counterTitleFont )
 
         canvas.setPen( Qt.black )
@@ -336,7 +336,7 @@ class BoothUI(QWidget):
 
         # the counter value
         counterValueFont = QFont("Helvetica Neue")
-        counterValueFont.setPointSize(100)
+        counterValueFont.setPointSize(180)
         canvas.setFont( counterValueFont )
 
         canvas.setPen( Qt.black )
