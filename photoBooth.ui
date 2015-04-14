@@ -61,17 +61,29 @@
          <height>0</height>
         </size>
        </property>
+       <property name="maximumSize">
+        <size>
+         <width>200</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="autoFillBackground">
         <bool>false</bool>
        </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
+       <property name="dragDropMode">
+        <enum>QAbstractItemView::NoDragDrop</enum>
+       </property>
        <property name="iconSize">
         <size>
          <width>170</width>
          <height>130</height>
         </size>
+       </property>
+       <property name="movement">
+        <enum>QListView::Static</enum>
        </property>
        <property name="resizeMode">
         <enum>QListView::Adjust</enum>
