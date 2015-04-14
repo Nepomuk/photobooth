@@ -156,9 +156,9 @@ class BoothUI(QWidget):
     def initObjects(self):
         self.printDim = Dimensions()
         self.liveViewIcon = {
-            "title": "",
-            "pic":   QIcon("graphics/liveview.png"),
-            "path":  "graphics/liveview.png"
+            "title": "Neues Foto",
+            "pic":   QIcon("graphics/picture_single.png"),
+            "path":  "graphics/picture_single.png"
         }
         self.title = {
             'liveview':     "Vorschau",
