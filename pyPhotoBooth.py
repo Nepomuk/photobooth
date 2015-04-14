@@ -54,8 +54,6 @@ WEBCAM_HEIGHT_PX = 500
 # some states the UI can be in
 S_LIVEVIEW = 'liveView'
 S_HIBERNATE = 'hibernate'
-S_COUNTDOWN = 'countdown'
-S_COUNTDOWN_MULTI = 'countdown_multi'
 S_DISPLAY = 'displayImage'
 
 M_SINGLE = 's'
@@ -178,6 +176,8 @@ class BoothUI(QWidget):
         self.ui.currentState = S_LIVEVIEW
         self.ui.currentMode = M_SINGLE
         self.multiShotFolder = ""
+        self.multiShotLastImage = ""
+        self.countDownOverlayActive = False
 
         self.countDownTimer = QTimer()
         self.countDownTimer.timeout.connect(self.shotCountDown)
@@ -298,8 +298,84 @@ class BoothUI(QWidget):
         # scale the image down if necessary
         pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
 
+        # overlay the countdown on the image if activated
+        if self.countDownOverlayActive:
+            pixmap = self.overlayCountdown(pixmap)
+
         # set image
         self.ui.label_pictureView.setPixmap(pixmap)
+
+
+    def overlayCountdown(self, pixmap):
+        canvas = QPainter()
+        canvas.begin(pixmap)
+        shadowOffset = 1
+
+        counterTitle = "Foto in"
+        if self.ui.currentMode == M_MULTI:
+            if self.multiShotCount == 1:
+                counterTitle = "Noch ein Foto in"
+            elif self.multiShotCount == 2:
+                counterTitle = "Noch einmal in"
+            elif self.multiShotCount == 3:
+                counterTitle = "Letztes Foto in"
+        counterValue = "{0}".format(self.countDownValue+1)
+
+        # the counter title
+        counterTitleRect = pixmap.rect()
+        counterTitleRect.setHeight(pixmap.height()/2)
+        counterTitleFont = QFont("Helvetica Neue")
+        counterTitleFont.setPointSize(50)
+        canvas.setFont( counterTitleFont )
+
+        canvas.setPen( Qt.black )
+        rect1 = counterTitleRect
+        rect1.translate(0,shadowOffset)
+        canvas.drawText( rect1, Qt.AlignCenter, counterTitle )
+
+        rect2 = counterTitleRect
+        rect2.translate(0,-shadowOffset)
+        canvas.drawText( rect2, Qt.AlignCenter, counterTitle )
+
+        rect3 = counterTitleRect
+        rect3.translate(shadowOffset,0)
+        canvas.drawText( rect3, Qt.AlignCenter, counterTitle )
+
+        rect4 = counterTitleRect
+        rect4.translate(-shadowOffset,0)
+        canvas.drawText( rect4, Qt.AlignCenter, counterTitle )
+
+        canvas.setPen( Qt.white )
+        canvas.drawText( counterTitleRect, Qt.AlignCenter, counterTitle )
+
+        # the counter value
+        counterValueFont = QFont("Helvetica Neue")
+        counterValueFont.setPointSize(100)
+        canvas.setFont( counterValueFont )
+
+        canvas.setPen( Qt.black )
+        rect1 = pixmap.rect()
+        rect1.translate(0,shadowOffset)
+        canvas.drawText( rect1, Qt.AlignCenter, counterValue )
+
+        rect2 = pixmap.rect()
+        rect2.translate(0,-shadowOffset)
+        canvas.drawText( rect2, Qt.AlignCenter, counterValue )
+
+        rect3 = pixmap.rect()
+        rect3.translate(shadowOffset,0)
+        canvas.drawText( rect3, Qt.AlignCenter, counterValue )
+
+        rect4 = pixmap.rect()
+        rect4.translate(-shadowOffset,0)
+        canvas.drawText( rect4, Qt.AlignCenter, counterValue )
+
+        canvas.setPen( Qt.white )
+        canvas.drawText( pixmap.rect(), Qt.AlignCenter, counterValue )
+
+
+        canvas.end()
+        return pixmap
 
 
     def pauseLiveview(self):
@@ -359,9 +435,11 @@ class BoothUI(QWidget):
 
             # not finished yet, repeat
             if self.multiShotCount < 4:
-                self.displayImage(filePath)
-
                 self.countDownValue = 2
+                self.countDownOverlayActive = True
+                self.multiShotLastImage = filePath
+
+                self.displayImage(filePath)
                 self.shotCountDown()
                 self.countDownTimer.start()
             else:
@@ -384,6 +462,7 @@ class BoothUI(QWidget):
             self.multiShotCount = 0
             self.multiShotFolder = getSeriesFolder()
 
+        self.countDownOverlayActive = True
         self.countDownValue = 3
         self.shotCountDown()
         self.countDownTimer.start()
@@ -395,13 +474,17 @@ class BoothUI(QWidget):
 
         if self.countDownValue > 0:
             self.countDownValue = self.countDownValue - 1
+            if self.multiShotLastImage != "":
+                self.displayImage(self.multiShotLastImage)
         else:
             self.countDownTimer.stop()
-            QTimer.singleShot(500, self.takeImage)
+            self.countDownOverlayActive = False
+            QTimer.singleShot(100, self.takeImage)
 
 
     def buildMultiShotImage(self):
         """ Combine the 4 taken images into one single picture. """
+        self.multiShotLastImage = ""
 
         # get a sorted list of files
         seriesPath = SERIES_PATH + self.multiShotFolder + '/'
@@ -480,6 +563,11 @@ class BoothUI(QWidget):
 
             self.ui.currentState = S_DISPLAY
             selectedImagePixmap = self.scaleImageToLabel(selectedImagePixmap)
+
+            # overlay the countdown on the image if activated
+            if self.countDownOverlayActive:
+                selectedImagePixmap = self.overlayCountdown(selectedImagePixmap)
+
             self.ui.label_pictureView.setPixmap(selectedImagePixmap)
             self.ui.pushButton_delete.setEnabled(True)
         else:
