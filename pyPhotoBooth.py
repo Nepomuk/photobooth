@@ -24,7 +24,7 @@ from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
 
 # should we use the webcam instead of the camera?
-USE_WEBCAM = False
+USE_WEBCAM = True
 
 # paths to generated files
 DELETED_PATH = "deleted/"
@@ -517,6 +517,8 @@ class BoothUI(QWidget):
         if selectedImageID > 0:
             selectedImage = self.pictureList[selectedImageID]
             self.printImage(selectedImage)
+            self.ui.listWidget_lastPictures.setCurrentRow(0)
+            self.displayImage()
 
 
     def printImage(self, image):
