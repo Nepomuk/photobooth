@@ -31,6 +31,7 @@ DELETED_PATH = "deleted/"
 PICTURE_PATH = "pictures/"
 PRINTS_PATH = "prints/"
 SERIES_PATH = "series/"
+THUMBNAIL_PATH = "thumbnails/"
 
 # dimensions
 class Dimensions():
@@ -92,6 +93,16 @@ def getSeriesFolder():
     return currentTimeString
 
 
+def createThumbnails(redoAll = False):
+    pictureFiles = filter(os.path.isfile, glob.glob(PICTURE_PATH + "*.jpg"))
+    for f in pictureFiles:
+        thumbnailFile = f.replace(PICTURE_PATH, THUMBNAIL_PATH)
+        if ( redoAll or not os.path.isfile(thumbnailFile) ):
+            image = QImage(f)
+            thumbnail = image.scaledToWidth(200)
+            thumbnail.save(thumbnailFile, "JPG", 90)
+
+
 def getPictureList():
     # get a sorted list of files
     pictureFiles = filter(os.path.isfile, glob.glob(PICTURE_PATH + "*.jpg"))
@@ -102,9 +113,16 @@ def getPictureList():
     pictures = []
     for f in pictureFiles:
         timeInfo = time.strftime( "%H:%M:%S", time.localtime(os.path.getctime(f)) )
+
+        # use the thumbnail if it exists
+        thumbnailFile = f.replace(PICTURE_PATH, THUMBNAIL_PATH)
+        if not os.path.isfile(thumbnailFile):
+            thumbnailFile = f
+        thumbnail = QIcon(thumbnailFile)
+
         pictures.append({
             "title": timeInfo,
-            "pic":   QIcon(f),
+            "pic":   thumbnail,
             "path":  f,
             "base":  os.path.splitext( os.path.basename(f) )[0]
         })
@@ -198,6 +216,8 @@ class BoothUI(QWidget):
         # update the UI
         self.ui.label_captureMode.setText(self.modeTitle[self.ui.currentMode])
         self.ui.label_captureModeIcon.setPixmap(self.modeIcon[self.ui.currentMode])
+
+        createThumbnails()
 
 
     def setupWebcam(self):
@@ -433,6 +453,9 @@ class BoothUI(QWidget):
 
         # update picture list and select the most recent one
         if not (self.ui.currentMode == M_MULTI and self.multiShotCount < 4):
+            # create thumbnails for new pictures
+            createThumbnails()
+
             self.ui.pushButton_main.setEnabled(True)
             self.updatePictureList()
             self.ui.listWidget_lastPictures.setCurrentRow(1)
