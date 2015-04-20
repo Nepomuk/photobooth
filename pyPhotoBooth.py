@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # pyPhotoBooth - Python tool to take pictures and print them
 # http://github.com/Nepomuk/pyPhotoBooth
@@ -387,9 +388,9 @@ class BoothUI(QWidget):
     def pauseLiveview(self):
         """ Pause the live preview for now. """
         if self.camHibernate.isActive():
-            self.camHibernate.stop()
             self.camRefresh.stop()
-            self.displayHibernateImage()
+            self.camHibernate.stop()
+            QTimer.singleShot(100, self.displayHibernateImage)
             self.ui.currentState = S_HIBERNATE
         else:
             self.camHibernate.start()
@@ -596,7 +597,7 @@ class BoothUI(QWidget):
         canvasFont = QFont("Helvetica Neue")
         canvasFont.setPointSize(50)
         canvas.setFont( canvasFont )
-        canvas.drawText( pixmap.rect(), Qt.AlignCenter, "Vorschau mit Fusstaster oder Leertaste reaktivieren." )
+        canvas.drawText( pixmap.rect(), Qt.AlignCenter, QString.fromUtf8("Vorschau mit Fußtaster oder Leertaste reaktivieren.") )
         canvas.end()
 
         pixmap = self.scaleImageToLabel(pixmap)
