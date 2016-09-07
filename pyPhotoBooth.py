@@ -158,9 +158,10 @@ class BoothUI(QWidget):
         scMode = QShortcut(QKeySequence(Qt.Key_M), self, self.toggleMode)
 
         # take an image
-        self.ui.pushButton_main.clicked.connect(self.startMainAction)
+        self.ui.pushButton_main.clicked.connect(self.startMainActionClick)
         scMain = QShortcut(QKeySequence(Qt.Key_Space), self, self.startMainAction)
         scMain2 = QShortcut(QKeySequence(Qt.Key_B), self, self.startMainAction)
+        scPrint = QShortcut(QKeySequence(Qt.Key_Return), self, self.printSelectedImage)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
@@ -194,7 +195,7 @@ class BoothUI(QWidget):
 
         self.camHibernate = QTimer()
         self.camHibernate.timeout.connect(self.pauseLiveview)
-        self.camHibernate.setInterval(2*60*1000)
+        self.camHibernate.setInterval(3*60*1000)
 
         self.printerPDF = QPrinter()
         self.printerPDF.setOrientation(QPrinter.Portrait)
@@ -416,6 +417,17 @@ class BoothUI(QWidget):
         if self.ui.currentState == S_LIVEVIEW:
             self.startPictureProcess()
         elif self.ui.currentState == S_DISPLAY:
+            self.ui.listWidget_lastPictures.setCurrentRow(0)
+            self.displayImage()
+        elif self.ui.currentState == S_HIBERNATE:
+            self.pauseLiveview()
+
+
+    def startMainActionClick(self):
+        """ Depending on the current state, take a picture or print. """
+        if self.ui.currentState == S_LIVEVIEW:
+            self.startPictureProcess()
+        elif self.ui.currentState == S_DISPLAY:
             self.printSelectedImage()
         elif self.ui.currentState == S_HIBERNATE:
             self.pauseLiveview()
@@ -473,7 +485,7 @@ class BoothUI(QWidget):
             self.multiShotFolder = getSeriesFolder()
 
         self.countDownOverlayActive = True
-        self.countDownValue = 3
+        self.countDownValue = 1
         self.shotCountDown()
         self.countDownTimer.start()
 
