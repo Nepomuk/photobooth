@@ -709,9 +709,14 @@ class BoothUI(QWidget):
 
 if __name__ == "__main__":
     # check, if PTPCamera is running and kill it
-    # for proc in psutil.process_iter():
-    #     if proc.name() == "PTPCamera":
-    #         proc.kill()
+    for proc in psutil.process_iter():
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'name'])
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            if pinfo['name'] == "PTPCamera":
+                proc.kill()
 
     # the GUI
     app = QApplication([])

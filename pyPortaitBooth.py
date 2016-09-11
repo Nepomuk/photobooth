@@ -666,7 +666,7 @@ class BoothUI(QWidget):
         for x in range(picture.width()):
             for y in range(picture.height()):
                 gray = qGray(picture.pixel(x,y))
-                monotone = QColor().fromHsv(tone.hue(), tone.saturation(), gray)
+                monotone = QColor().fromHsv(tone.hue(), tone.saturation()*1.2, gray)
                 monotone = monotone.lighter(130)
                 coloredPicture.setPixel(x,y, monotone.rgb())
 
@@ -747,9 +747,14 @@ class BoothUI(QWidget):
 
 if __name__ == "__main__":
     # check, if PTPCamera is running and kill it
-    # for proc in psutil.process_iter():
-    #     if proc.name() == "PTPCamera":
-    #         proc.kill()
+    for proc in psutil.process_iter():
+        try:
+            pinfo = proc.as_dict(attrs=['pid', 'name'])
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            if pinfo['name'] == "PTPCamera":
+                proc.kill()
 
     # the GUI
     app = QApplication([])
