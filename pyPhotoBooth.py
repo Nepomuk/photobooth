@@ -257,6 +257,10 @@ class BoothUI(QWidget):
         # scale the image down if necessary
         pixmap = self.scaleImageToLabel(pixmap)
 
+        # overlay the countdown on the image if activated
+        if self.countDownOverlayActive:
+            pixmap = self.overlayCountdown(pixmap)
+
         # set image
         self.ui.label_pictureView.setPixmap(pixmap)
 
@@ -690,9 +694,9 @@ class BoothUI(QWidget):
 
 if __name__ == "__main__":
     # check, if PTPCamera is running and kill it
-    for proc in psutil.process_iter():
-        if proc.name() == "PTPCamera":
-            proc.kill()
+    # for proc in psutil.process_iter():
+    #     if proc.name() == "PTPCamera":
+    #         proc.kill()
 
     # the GUI
     app = QApplication([])
