@@ -61,40 +61,16 @@ S_LIVEVIEW = 'liveView'
 S_HIBERNATE = 'hibernate'
 S_DISPLAY = 'displayImage'
 
-M_SINGLE = 's'
-M_MULTI = 'm'
 
-
-def getFilePath(pictureMode, seriesFolder = "", composedImage = False):
+def getFilePath():
     """ Generate a file name for the picture. """
     currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
     basename = currentTimeString
-    if pictureMode == M_SINGLE:
-        suffix = "_single"
-    elif pictureMode == M_MULTI:
-        if not composedImage:
-            suffix = "_partial"
-        else:
-            suffix = "_series"
-            basename = seriesFolder
     extension = ".jpg"
-    filename = basename + suffix + extension
-
-    if pictureMode == M_MULTI and not composedImage:
-        filepath = SERIES_PATH + seriesFolder + '/' + filename
-    else:
-        filepath = PICTURE_PATH + filename
+    filename = basename + extension
+    filepath = PICTURE_PATH + filename
 
     return filepath
-
-
-def getSeriesFolder():
-    """ Generate a folder name for the picture series. """
-    currentTimeString = time.strftime("%Y-%m-%d_%H-%M-%S")
-    seriesPath = SERIES_PATH + currentTimeString
-    if not os.path.exists(seriesPath):
-        os.makedirs(seriesPath)
-    return currentTimeString
 
 
 def createThumbnails(redoAll = False):
@@ -168,10 +144,6 @@ class BoothUI(QWidget):
         quit_action.triggered.connect(qApp.closeAllWindows)
         self.addAction(quit_action)
 
-        # toggle mode
-        self.ui.pushButton_switchMode.clicked.connect(self.toggleMode)
-        scMode = QShortcut(QKeySequence(Qt.Key_M), self, self.toggleMode)
-
         # take an image
         self.ui.pushButton_main.clicked.connect(self.startMainActionClick)
         scMain = QShortcut(QKeySequence(Qt.Key_Space), self, self.startMainAction)
@@ -193,13 +165,7 @@ class BoothUI(QWidget):
             "pic":   QIcon("graphics/picture_single.png"),
             "path":  "graphics/picture_single.png"
         }
-        self.modeTitle = { 's': "Einzelbild", 'm': "Bilderserie" }
-        self.modeIcon = {
-            's': QPixmap(":/icon/graphics/picture_single.png"),
-            'm': QPixmap(":/icon/graphics/picture_multi.png")
-        }
         self.ui.currentState = S_LIVEVIEW
-        self.ui.currentMode = M_SINGLE
         self.multiShotFolder = ""
         self.multiShotLastImage = ""
         self.countDownOverlayActive = False
@@ -219,22 +185,6 @@ class BoothUI(QWidget):
         self.printerPDF.setOutputFormat(QPrinter.PdfFormat)
 
         self.adjustMainButton()
-
-
-    def toggleMode(self):
-        """ Toggle the mode between single and multiple photos """
-        # switch mode
-        if self.ui.currentMode == M_SINGLE:
-            self.ui.currentMode = M_MULTI
-        else:
-            self.multiShotFolder = ""
-            self.ui.currentMode = M_SINGLE
-
-        # update the UI
-        self.ui.label_captureMode.setText(self.modeTitle[self.ui.currentMode])
-        self.ui.label_captureModeIcon.setPixmap(self.modeIcon[self.ui.currentMode])
-
-        createThumbnails()
 
 
     def setupWebcam(self):
@@ -339,13 +289,6 @@ class BoothUI(QWidget):
         shadowOffset = 2
 
         counterTitle = "Foto in"
-        if self.ui.currentMode == M_MULTI:
-            if self.multiShotCount == 1:
-                counterTitle = "Noch ein Foto in"
-            elif self.multiShotCount == 2:
-                counterTitle = "Noch einmal in"
-            elif self.multiShotCount == 3:
-                counterTitle = "Letztes Foto in"
         counterValue = "{0}".format(self.countDownValue+1)
 
         # the counter title
@@ -459,7 +402,7 @@ class BoothUI(QWidget):
         self.camHibernate.stop()
 
         # now take a picture
-        filePath = getFilePath(self.ui.currentMode, self.multiShotFolder)
+        filePath = getFilePath()
         if USE_WEBCAM:
             frame = self.captureFrame()
             frame = cv2.flip(frame, 1)
@@ -467,42 +410,18 @@ class BoothUI(QWidget):
         else:
             self.camera.capture_image(filePath)
 
-        # things required for multiple shots
-        if self.ui.currentMode == M_MULTI:
-            self.multiShotCount = self.multiShotCount + 1
-
-            # not finished yet, repeat
-            if self.multiShotCount < 4:
-                self.countDownValue = 2
-                self.countDownOverlayActive = True
-                self.multiShotLastImage = filePath
-
-                self.displayImage(filePath)
-                self.shotCountDown()
-                self.countDownTimer.start()
-            else:
-                self.buildMultiShotImage()
-
         # update picture list and select the most recent one
-        if not (self.ui.currentMode == M_MULTI and self.multiShotCount < 4):
-            # create thumbnails for new pictures
-            createThumbnails()
+        createThumbnails()
 
-            self.ui.pushButton_main.setEnabled(True)
-            self.updatePictureList()
-            self.ui.listWidget_lastPictures.setCurrentRow(1)
-            self.displayImage()
+        self.ui.pushButton_main.setEnabled(True)
+        self.updatePictureList()
+        self.ui.listWidget_lastPictures.setCurrentRow(1)
+        self.displayImage()
 
 
     def startPictureProcess(self):
         """ Starts the process taking pichture(s) depending on the set mode. """
         self.ui.pushButton_main.setEnabled(False)
-
-        # prepare the picture series
-        if self.ui.currentMode == M_MULTI:
-            self.multiShotCount = 0
-            self.multiShotFolder = getSeriesFolder()
-
         self.countDownOverlayActive = True
         self.countDownValue = 2
         self.shotCountDown()
@@ -512,60 +431,12 @@ class BoothUI(QWidget):
     def shotCountDown(self):
         if self.countDownValue > 0:
             self.countDownValue = self.countDownValue - 1
-            if self.multiShotLastImage != "":
-                self.displayImage(self.multiShotLastImage)
+            # if self.multiShotLastImage != "":
+            #     self.displayImage(self.multiShotLastImage)
         else:
             self.countDownTimer.stop()
             self.countDownOverlayActive = False
             QTimer.singleShot(100, self.takeImage)
-
-
-    def buildMultiShotImage(self):
-        """ Combine the 4 taken images into one single picture. """
-        self.multiShotLastImage = ""
-
-        # get a sorted list of files
-        seriesPath = SERIES_PATH + self.multiShotFolder + '/'
-        pictureFiles = filter(os.path.isfile, glob.glob(seriesPath + "*.jpg"))
-        pictureFiles.sort(key=lambda x: os.path.getctime(x))
-
-        # create the base of the image
-        pictureSize = QImage(pictureFiles[0]).size()
-        spacing = pictureSize.height() / 42
-        image = QImage(pictureSize.width() + 3*spacing, pictureSize.height() + 3*spacing, QImage.Format_RGB32)
-        image.fill(Qt.white)
-
-        # use a QPainter to place the other images inside
-        canvas = QPainter()
-        canvas.begin(image)
-
-        if len(pictureFiles) > 0:
-            target = QRectF(
-                spacing, spacing,
-                pictureSize.width()/2, pictureSize.height()/2
-            )
-            canvas.drawImage(target, QImage(pictureFiles[0]))
-        if len(pictureFiles) > 1:
-            target = QRectF(
-                pictureSize.width()/2 + 2*spacing, spacing,
-                pictureSize.width()/2, pictureSize.height()/2
-            )
-            canvas.drawImage(target, QImage(pictureFiles[1]))
-        if len(pictureFiles) > 2:
-            target = QRectF(
-                spacing, pictureSize.height()/2 + 2*spacing,
-                pictureSize.width()/2, pictureSize.height()/2
-            )
-            canvas.drawImage(target, QImage(pictureFiles[2]))
-        if len(pictureFiles) > 3:
-            target = QRectF(
-                pictureSize.width()/2 + 2*spacing, pictureSize.height()/2 + 2*spacing,
-                pictureSize.width()/2, pictureSize.height()/2
-            )
-            canvas.drawImage(target, QImage(pictureFiles[3]))
-
-        canvas.end()
-        image.save(getFilePath(M_MULTI, self.multiShotFolder, True), "JPG", 92)
 
 
     def updatePictureList(self):
