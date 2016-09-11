@@ -22,7 +22,7 @@ import gphoto2 as gp
 # the UI
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from photoBoothUI import Ui_photoBooth
+from portraitBoothUI import Ui_portraitBooth
 
 # which camera input should be used?
 #  auto: use external camera if connected
@@ -51,6 +51,29 @@ class Dimensions():
 
     def getPageSizeUnit(self):
         return QPrinter.Millimeter
+
+# cropping frame
+class CropFrame():
+    def __init__(self, parent=None):
+        self.width = 80
+        self.height = 80
+        self.offsetX = 10
+        self.offsetY = 10
+        self.shift = 1.0
+        self.PaperDimension = Dimensions()
+
+    def getRatio(self):
+        return float(self.width) / self.height
+
+    def moveFrameToRight():
+        newOffset = self.offsetX + self.shift
+        if newOffset + self.width < self.PaperDimension.width:
+            self.offsetX = newOffset
+
+    def moveFrameToLeft():
+        newOffset = self.offsetX - self.shift
+        if newOffset > 0:
+            self.offsetX = newOffset
 
 
 WEBCAM_WIDTH_PX = 740
@@ -113,7 +136,7 @@ class BoothUI(QWidget):
     def __init__(self, parent=None):
         """Initialize QWidget"""
         QWidget.__init__(self, parent)
-        self.ui = Ui_photoBooth()
+        self.ui = Ui_portraitBooth()
         self.ui.setupUi(self)
         self.initObjects()
 
