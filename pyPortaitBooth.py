@@ -55,25 +55,47 @@ class Dimensions():
 # cropping frame
 class CropFrame():
     def __init__(self, parent=None):
-        self.width = 80
-        self.height = 80
-        self.offsetX = 10
-        self.offsetY = 10
+        # relative values (size + offset < 100!)
+        self.height = 0.8
+        self.offsetX = 0.2
+        self.offsetY = 0.05
         self.shift = 1.0
-        self.PaperDimension = Dimensions()
 
-    def getRatio(self):
-        return float(self.width) / self.height
+        # ratio defined as width/height; >1 is a wide image, <1 a tall one
+        self.ratio = 1.0
+        # self.PaperDimension = Dimensions()
 
-    def moveFrameToRight():
-        newOffset = self.offsetX + self.shift
-        if newOffset + self.width < self.PaperDimension.width:
-            self.offsetX = newOffset
+    def setBaseImageSize(self, pixmap):
+        self.baseWidth = pixmap.width()
+        self.baseHeight = pixmap.height()
+        self.baseRatio = float(pixmap.width())/pixmap.height()
 
-    def moveFrameToLeft():
-        newOffset = self.offsetX - self.shift
-        if newOffset > 0:
-            self.offsetX = newOffset
+    def getOffsetTop(self):
+        offsetTop = self.baseHeight * self.offsetY
+        return int(offsetTop)
+
+    def getOffsetRight(self):
+        croppedWidth = self.height * self.ratio / self.baseRatio
+        offsetRight = self.baseWidth * (croppedWidth + self.offsetX)
+        return int(offsetRight)
+
+    def getOffsetBottom(self):
+        offsetBottom = self.baseHeight * (self.height + self.offsetY)
+        return int(offsetBottom)
+
+    def getOffsetLeft(self):
+        offsetLeft = self.baseWidth * self.offsetX
+        return int(offsetLeft)
+
+    # def moveFrameToRight():
+    #     newOffset = self.offsetX + self.shift
+    #     if newOffset + self.width < self.PaperDimension.width:
+    #         self.offsetX = newOffset
+
+    # def moveFrameToLeft():
+    #     newOffset = self.offsetX - self.shift
+    #     if newOffset > 0:
+    #         self.offsetX = newOffset
 
 
 WEBCAM_WIDTH_PX = 740
@@ -183,6 +205,7 @@ class BoothUI(QWidget):
 
     def initObjects(self):
         self.printDim = Dimensions()
+        self.croppedFrame = CropFrame()
         self.liveViewIcon = {
             "title": "Neues Foto",
             "pic":   QIcon("graphics/picture_single.png"),
@@ -271,9 +294,9 @@ class BoothUI(QWidget):
             newFrame = frame[0:frameSize[1], cutWidth:(cutWidth+newWidth)]
         else:
             # image is higher than it should be, keep width
-            newHeigth = int(float(frameSize[0]) / self.printDim.getRatio())
-            cutHeigth = int(( frameSize[1] - newHeigth ) / 2)
-            newFrame = frame[cutHeigth:(cutHeigth+newHeigth), 0:frameSize[0]]
+            newHeight = int(float(frameSize[0]) / self.printDim.getRatio())
+            cutHeight = int(( frameSize[1] - newHeight ) / 2)
+            newFrame = frame[cutHeight:(cutHeight+newHeight), 0:frameSize[0]]
 
         return newFrame
 
@@ -295,8 +318,11 @@ class BoothUI(QWidget):
         image = QImage(frame, frame.shape[1], frame.shape[0],
                        frame.strides[0], QImage.Format_RGB888)
 
+        # show the frame of cropped areas
+        pixmap = self.overlayCroppingFrame(QPixmap.fromImage(image))
+
         # scale the image down if necessary
-        pixmap = self.scaleImageToLabel(QPixmap.fromImage(image))
+        pixmap = self.scaleImageToLabel(pixmap)
 
         # overlay the countdown on the image if activated
         if self.countDownOverlayActive:
@@ -304,6 +330,44 @@ class BoothUI(QWidget):
 
         # set image
         self.ui.label_pictureView.setPixmap(pixmap)
+
+
+    def overlayCroppingFrame(self, pixmap):
+        canvas = QPainter()
+        canvas.begin(pixmap)
+        self.croppedFrame.setBaseImageSize(pixmap)
+        whiteTransparent = QBrush(QColor(255, 255, 255, 160))
+
+        topRect = QRect()
+        topRect.setTop(0)
+        topRect.setLeft(0)
+        topRect.setBottom(self.croppedFrame.getOffsetTop())
+        topRect.setRight(pixmap.width())
+
+        bottomRect = QRect()
+        bottomRect.setTop(self.croppedFrame.getOffsetBottom())
+        bottomRect.setLeft(0)
+        bottomRect.setBottom(pixmap.height())
+        bottomRect.setRight(pixmap.width())
+
+        leftRect = QRect()
+        leftRect.setTop(self.croppedFrame.getOffsetTop()+1)
+        leftRect.setLeft(0)
+        leftRect.setBottom(self.croppedFrame.getOffsetBottom()-1)
+        leftRect.setRight(self.croppedFrame.getOffsetLeft())
+
+        rightRect = QRect()
+        rightRect.setTop(self.croppedFrame.getOffsetTop()+1)
+        rightRect.setLeft(self.croppedFrame.getOffsetRight())
+        rightRect.setBottom(self.croppedFrame.getOffsetBottom()-1)
+        rightRect.setRight(pixmap.width())
+
+        canvas.fillRect(topRect, whiteTransparent)
+        canvas.fillRect(bottomRect, whiteTransparent)
+        canvas.fillRect(leftRect, whiteTransparent)
+        canvas.fillRect(rightRect, whiteTransparent)
+
+        return pixmap
 
 
     def overlayCountdown(self, pixmap):
