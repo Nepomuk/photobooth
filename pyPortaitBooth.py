@@ -295,6 +295,9 @@ class BoothUI(QWidget):
         # scale the image down if necessary
         pixmap = self.scaleImageToLabel(pixmap)
 
+        # show the frame of cropped areas
+        pixmap = self.overlayCroppingFrame(pixmap)
+
         # overlay the countdown on the image if activated
         if self.countDownOverlayActive:
             pixmap = self.overlayCountdown(pixmap)
