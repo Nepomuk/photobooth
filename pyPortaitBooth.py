@@ -61,7 +61,7 @@ class CropFrame():
         self.height = 0.8
         self.offsetX = 0.2
         self.offsetY = 0.05
-        self.shift = 1.0
+        self.shift = 0.005
 
         # ratio defined as width/height; >1 is a wide image, <1 a tall one
         self.ratio = 1.0
@@ -103,15 +103,47 @@ class CropFrame():
     def getCanvasWidth(self):
         return self.getCroppedHeight() * self.paperDimension.getRatio()
 
-    # def moveFrameToRight():
-    #     newOffset = self.offsetX + self.shift
-    #     if newOffset + self.width < self.PaperDimension.width:
-    #         self.offsetX = newOffset
 
-    # def moveFrameToLeft():
-    #     newOffset = self.offsetX - self.shift
-    #     if newOffset > 0:
-    #         self.offsetX = newOffset
+    def moveFrameToRight(self):
+        croppedWidth = self.height * self.ratio / self.baseRatio
+        newOffset = self.offsetX + self.shift
+        if newOffset <= 1.0 - croppedWidth:
+            self.offsetX = newOffset
+        else:
+            self.offsetX = 1.0 - croppedWidth
+
+    def moveFrameToLeft(self):
+        newOffset = self.offsetX - self.shift
+        if newOffset >= 0:
+            self.offsetX = newOffset
+        else:
+            self.offsetX = 0.0
+
+    def moveFrameToBottom(self):
+        newOffset = self.offsetY + self.shift
+        if newOffset <= 1.0 - self.height:
+            self.offsetY = newOffset
+        else:
+            self.offsetY = 1.0 - self.height
+
+    def moveFrameToTop(self):
+        newOffset = self.offsetY - self.shift
+        if newOffset >= 0:
+            self.offsetY = newOffset
+        else:
+            self.offsetY = 0.0
+
+    def enlargeFrame(self):
+        newHeight = self.height + self.shift
+        if newHeight + self.offsetY <= 1.0:
+            self.height = newHeight
+
+    def shrinkFrame(self):
+        newHeight = self.height - self.shift
+        if newHeight > 0.3:
+            self.height = newHeight
+        else:
+            self.height = 0.3
 
 
 WEBCAM_WIDTH_PX = 740
@@ -222,6 +254,14 @@ class BoothUI(QWidget):
         scMain = QShortcut(QKeySequence(Qt.Key_Space), self, self.startMainAction)
         scMain2 = QShortcut(QKeySequence(Qt.Key_B), self, self.startMainAction)
         scPrint = QShortcut(QKeySequence(Qt.Key_Return), self, self.printSelectedImage)
+
+        # modify the crop frame
+        scCFleft = QShortcut(QKeySequence(Qt.Key_Left), self, self.cropFrameLeft)
+        scCFright = QShortcut(QKeySequence(Qt.Key_Right), self, self.cropFrameRight)
+        scCFup = QShortcut(QKeySequence(Qt.Key_Up), self, self.cropFrameUp)
+        scCFdown = QShortcut(QKeySequence(Qt.Key_Down), self, self.cropFrameDown)
+        scCFplus = QShortcut(QKeySequence(Qt.Key_Plus), self, self.cropFrameEnlarge)
+        scCFminus = QShortcut(QKeySequence(Qt.Key_Minus), self, self.cropFrameShrink)
 
         # select an image
         self.ui.listWidget_lastPictures.itemSelectionChanged.connect(self.displayImage)
@@ -510,6 +550,20 @@ class BoothUI(QWidget):
             self.printSelectedImage()
         elif self.ui.currentState == S_HIBERNATE:
             self.pauseLiveview()
+
+
+    def cropFrameLeft(self):
+        self.croppedFrame.moveFrameToLeft()
+    def cropFrameRight(self):
+        self.croppedFrame.moveFrameToRight()
+    def cropFrameUp(self):
+        self.croppedFrame.moveFrameToTop()
+    def cropFrameDown(self):
+        self.croppedFrame.moveFrameToBottom()
+    def cropFrameEnlarge(self):
+        self.croppedFrame.enlargeFrame()
+    def cropFrameShrink(self):
+        self.croppedFrame.shrinkFrame()
 
 
     def takeImage(self):
