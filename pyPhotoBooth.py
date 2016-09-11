@@ -145,6 +145,7 @@ class BoothUI(QWidget):
         self.updatePictureList()
 
         # detect if an external camera has been connected
+        global USE_WEBCAM
         if CAM_MODE == 'auto':
             if piggyphoto.CameraList(autodetect=True).count() > 0:
                 USE_WEBCAM = False
@@ -292,13 +293,13 @@ class BoothUI(QWidget):
         # which direction should be cut?
         if frameRatio > self.printDim.getRatio():
             # image is wider than it should be, keep height
-            newWidth = self.printDim.getRatio() * frameSize[1]
-            cutWidth = ( frameSize[0] - newWidth ) / 2
+            newWidth = int(self.printDim.getRatio() * frameSize[1])
+            cutWidth = int(( frameSize[0] - newWidth ) / 2)
             newFrame = frame[0:frameSize[1], cutWidth:(cutWidth+newWidth)]
         else:
             # image is higher than it should be, keep width
-            newHeigth = float(frameSize[0]) / self.printDim.getRatio()
-            cutHeigth = ( frameSize[1] - newHeigth ) / 2
+            newHeigth = int(float(frameSize[0]) / self.printDim.getRatio())
+            cutHeigth = int(( frameSize[1] - newHeigth ) / 2)
             newFrame = frame[cutHeigth:(cutHeigth+newHeigth), 0:frameSize[0]]
 
         return newFrame
@@ -503,7 +504,7 @@ class BoothUI(QWidget):
             self.multiShotFolder = getSeriesFolder()
 
         self.countDownOverlayActive = True
-        self.countDownValue = 1
+        self.countDownValue = 2
         self.shotCountDown()
         self.countDownTimer.start()
 
