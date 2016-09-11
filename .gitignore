@@ -3,17 +3,9 @@
 *_rc.py
 
 # skip the taken pictures folder
+deleted/
 pictures/
+pictures_raw/
 prints/
-
-# added by GitSavvy
-/series/
-
-# added by GitSavvy
-/deleted/
-
-# added by GitSavvy
-/piggyphoto_old/
-
-# added by GitSavvy
-/thumbnails/
+series/
+thumbnails/

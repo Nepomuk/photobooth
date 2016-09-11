@@ -34,7 +34,7 @@ CAM_MODE = 'auto'
 DELETED_PATH = "deleted/"
 PICTURE_PATH = "pictures/"
 PRINTS_PATH = "prints/"
-SERIES_PATH = "series/"
+RAWPICS_PATH = "pictures_raw/"
 THUMBNAIL_PATH = "thumbnails/"
 
 # dimensions
@@ -63,7 +63,7 @@ class CropFrame():
 
         # ratio defined as width/height; >1 is a wide image, <1 a tall one
         self.ratio = 1.0
-        # self.PaperDimension = Dimensions()
+        self.paperDimension = Dimensions()
 
     def setBaseImageSize(self, pixmap):
         self.baseWidth = pixmap.width()
@@ -86,6 +86,20 @@ class CropFrame():
     def getOffsetLeft(self):
         offsetLeft = self.baseWidth * self.offsetX
         return int(offsetLeft)
+
+
+    def getCroppedHeight(self):
+        return self.baseHeight * self.height
+
+    def getCroppedWidth(self):
+        croppedWidth = self.height * self.ratio / self.baseRatio
+        return self.baseWidth * croppedWidth
+
+    def getCanvasHeight(self):
+        return self.getCroppedHeight()
+
+    def getCanvasWidth(self):
+        return self.getCroppedHeight() * self.paperDimension.getRatio()
 
     # def moveFrameToRight():
     #     newOffset = self.offsetX + self.shift
@@ -113,9 +127,10 @@ def getFilePath():
     basename = currentTimeString
     extension = ".jpg"
     filename = basename + extension
+    rawfilepath = RAWPICS_PATH + filename
     filepath = PICTURE_PATH + filename
 
-    return filepath
+    return rawfilepath, filepath
 
 
 def createThumbnails(redoAll = False):
@@ -212,8 +227,7 @@ class BoothUI(QWidget):
             "path":  "graphics/picture_single.png"
         }
         self.ui.currentState = S_LIVEVIEW
-        self.multiShotFolder = ""
-        self.multiShotLastImage = ""
+        self.lastRawPicture = ""
         self.countDownOverlayActive = False
 
         self.countDownTimer = QTimer()
@@ -489,13 +503,16 @@ class BoothUI(QWidget):
         self.camHibernate.stop()
 
         # now take a picture
-        filePath = getFilePath()
+        rawFilePath, filePath = getFilePath()
         if USE_WEBCAM:
             frame = self.captureFrame()
             frame = cv2.flip(frame, 1)
-            cv2.imwrite(filePath, frame)
+            cv2.imwrite(rawFilePath, frame)
         else:
-            self.camera.capture_image(filePath)
+            self.camera.capture_image(rawFilePath)
+
+        # adjust image for the portrait wall
+        self.cropAndColorImage(rawFilePath, filePath)
 
         # update picture list and select the most recent one
         createThumbnails()
@@ -591,6 +608,46 @@ class BoothUI(QWidget):
 
         pixmap = self.scaleImageToLabel(pixmap)
         self.ui.label_pictureView.setPixmap(pixmap)
+
+
+    def cropAndColorImage(self, rawFilePath, filePath):
+        # define colors
+        color_ah = [["#80bfff", "#99ccff", "#b3d9ff"], ["#5799d7"], ["#6792ab"], ["#9eb9bb"], ["#5e937d"]]
+        color_aw = [["#b482c9"], ["#8787de"], ["#a6cbfc", "#bfdafd", "#cee2fd"], ["#dfafe4"], ["#8e9fcb"]]
+        colors = [x[0] for x in (color_ah + color_aw)]
+
+        # load the picture
+        rawPicture = QImage(rawFilePath)
+        self.croppedFrame.setBaseImageSize(rawPicture.size())
+
+        # create the base of the image including white space
+        canvas = QPainter()
+        canvasImage = QImage(self.croppedFrame.getCanvasWidth(), self.croppedFrame.getCanvasHeight(), QImage.Format_RGB32)
+        canvasImage.fill(Qt.white)
+        canvas.begin(canvasImage)
+
+        # crop and color the raw image
+        picture = self.cropImage(rawPicture)
+        # picture = self.colorImage(picture)
+
+        # place the actual image on one side
+        target = QRectF(0, 0, self.croppedFrame.getCroppedWidth(), self.croppedFrame.getCroppedHeight())
+        canvas.drawImage(target, picture)
+
+        # finish and save
+        canvas.end()
+        canvasImage.save(filePath, "JPG", 92)
+
+
+    def cropImage(self, rawPicture):
+        cropArea = QRect()
+        cropArea.setTop(self.croppedFrame.getOffsetTop())
+        cropArea.setRight(self.croppedFrame.getOffsetRight())
+        cropArea.setBottom(self.croppedFrame.getOffsetBottom())
+        cropArea.setLeft(self.croppedFrame.getOffsetLeft())
+
+        croppedPicture = rawPicture.copy(cropArea)
+        return croppedPicture
 
 
     def printSelectedImage(self):
