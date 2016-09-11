@@ -10,6 +10,7 @@ import psutil
 import glob
 import time
 import random
+from subprocess import call
 
 # used for the webcam
 import numpy as np
@@ -633,9 +634,8 @@ class BoothUI(QWidget):
         canvasImage.fill(Qt.white)
         canvas.begin(canvasImage)
 
-        # crop and color the raw image
+        # crop the raw image
         picture = self.cropImage(rawPicture)
-        picture = self.colorImage(picture)
 
         # place the actual image on one side
         target = QRectF(0, 0, self.croppedFrame.getCroppedWidth(), self.croppedFrame.getCroppedHeight())
@@ -643,7 +643,10 @@ class BoothUI(QWidget):
 
         # finish and save
         canvas.end()
-        canvasImage.save(filePath, "JPG", 92)
+        canvasImage.save(filePath, "JPG", 93)
+
+        # finally color the image (last step because it needs a physical file)
+        self.colorImage(filePath)
 
 
     def cropImage(self, rawPicture):
@@ -657,20 +660,24 @@ class BoothUI(QWidget):
         return croppedPicture
 
 
-    def colorImage(self, picture):
+    def colorImage(self, filePath):
         # get a random tone and normalize it
         tone = getCurrentTone()
 
         # extract gray value for each pixel and color it then
-        coloredPicture = picture
-        for x in range(picture.width()):
-            for y in range(picture.height()):
-                gray = qGray(picture.pixel(x,y))
-                monotone = QColor().fromHsv(tone.hue(), tone.saturation()*1.2, gray)
-                monotone = monotone.lighter(130)
-                coloredPicture.setPixel(x,y, monotone.rgb())
+        # coloredPicture = picture
+        # for x in range(picture.width()):
+        #     for y in range(picture.height()):
+        #         gray = qGray(picture.pixel(x,y))
+        #         monotone = QColor().fromHsv(tone.hue(), tone.saturation()*1.2, gray)
+        #         monotone = monotone.lighter(130)
+        #         coloredPicture.setPixel(x,y, monotone.rgb())
 
-        return coloredPicture
+        # return coloredPicture
+
+        # use imagemagick to convert the color of the image
+        levelColors = "'rgb({0},{1},{2})',".format(tone.red(), tone.green(), tone.blue())
+        call(["convert", filePath, "-colorspace", "Gray", "+level-colors", levelColors, filePath])
 
 
     def printSelectedImage(self):
