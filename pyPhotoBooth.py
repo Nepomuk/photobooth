@@ -24,8 +24,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from photoBoothUI import Ui_photoBooth
 
-# should we use the webcam instead of the camera?
-USE_WEBCAM = True
+# which camera input should be used?
+#  auto: use external camera if connected
+#  ext: try to force external camera (might crash)
+#  webcam: use internal webcam
+CAM_MODE = 'auto'
 
 # paths to generated files
 DELETED_PATH = "deleted/"
@@ -140,6 +143,17 @@ class BoothUI(QWidget):
 
         # display the latest pictures
         self.updatePictureList()
+
+        # detect if an external camera has been connected
+        if CAM_MODE == 'auto':
+            if piggyphoto.CameraList(autodetect=True).count() > 0:
+                USE_WEBCAM = False
+            else:
+                USE_WEBCAM = True
+        elif CAM_MODE == 'ext':
+            USE_WEBCAM = False
+        else:
+            USE_WEBCAM = True
 
         # init the webcam / camera
         if USE_WEBCAM:
