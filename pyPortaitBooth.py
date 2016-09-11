@@ -9,6 +9,7 @@ import sys, os
 import psutil
 import glob
 import time
+import random
 
 # used for the webcam
 import numpy as np
@@ -167,6 +168,17 @@ def getPictureList():
             "base":  os.path.splitext( os.path.basename(f) )[0]
         })
     return pictures
+
+
+def getCurrentTone():
+    # define colors
+    color_ah = [["#80bfff", "#99ccff", "#b3d9ff"], ["#5799d7"], ["#6792ab"], ["#9eb9bb"], ["#5e937d"]]
+    color_aw = [["#b482c9"], ["#8787de"], ["#a6cbfc", "#bfdafd", "#cee2fd"], ["#dfafe4"], ["#8e9fcb"]]
+    colors = [x[0] for x in (color_ah + color_aw)]
+
+    # extract one random value
+    rndIdx = int(random.uniform(0, len(colors)))
+    return QColor(colors[rndIdx])
 
 
 class BoothUI(QWidget):
@@ -611,11 +623,6 @@ class BoothUI(QWidget):
 
 
     def cropAndColorImage(self, rawFilePath, filePath):
-        # define colors
-        color_ah = [["#80bfff", "#99ccff", "#b3d9ff"], ["#5799d7"], ["#6792ab"], ["#9eb9bb"], ["#5e937d"]]
-        color_aw = [["#b482c9"], ["#8787de"], ["#a6cbfc", "#bfdafd", "#cee2fd"], ["#dfafe4"], ["#8e9fcb"]]
-        colors = [x[0] for x in (color_ah + color_aw)]
-
         # load the picture
         rawPicture = QImage(rawFilePath)
         self.croppedFrame.setBaseImageSize(rawPicture.size())
@@ -628,7 +635,7 @@ class BoothUI(QWidget):
 
         # crop and color the raw image
         picture = self.cropImage(rawPicture)
-        # picture = self.colorImage(picture)
+        picture = self.colorImage(picture)
 
         # place the actual image on one side
         target = QRectF(0, 0, self.croppedFrame.getCroppedWidth(), self.croppedFrame.getCroppedHeight())
@@ -648,6 +655,22 @@ class BoothUI(QWidget):
 
         croppedPicture = rawPicture.copy(cropArea)
         return croppedPicture
+
+
+    def colorImage(self, picture):
+        # get a random tone and normalize it
+        tone = getCurrentTone()
+
+        # extract gray value for each pixel and color it then
+        coloredPicture = picture
+        for x in range(picture.width()):
+            for y in range(picture.height()):
+                gray = qGray(picture.pixel(x,y))
+                monotone = QColor().fromHsv(tone.hue(), tone.saturation(), gray)
+                monotone = monotone.lighter(130)
+                coloredPicture.setPixel(x,y, monotone.rgb())
+
+        return coloredPicture
 
 
     def printSelectedImage(self):
