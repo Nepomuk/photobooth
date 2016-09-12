@@ -505,6 +505,18 @@ class BoothUI(QWidget):
         return pixmap
 
 
+    def overlayShutter(self):
+        pixmap = self.ui.label_pictureView.pixmap()
+
+        canvas = QPainter()
+        canvas.begin(pixmap)
+        canvas.fillRect(0,0, pixmap.width(), pixmap.height(), QColor(255,255,255,150))
+        canvas.end()
+
+        pixmap = self.scaleImageToLabel(pixmap)
+        self.ui.label_pictureView.setPixmap(pixmap)
+
+
     def pauseLiveview(self):
         """ Pause the live preview for now. """
         if self.camHibernate.isActive():
@@ -571,6 +583,7 @@ class BoothUI(QWidget):
         # first, block the webcam stream for a while
         self.camRefresh.stop()
         self.camHibernate.stop()
+        self.overlayShutter()
 
         # now take a picture
         rawFilePath, filePath = getFilePath()
