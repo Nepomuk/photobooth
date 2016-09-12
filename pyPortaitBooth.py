@@ -256,6 +256,7 @@ class BoothUI(QWidget):
         scPrint = QShortcut(QKeySequence(Qt.Key_Return), self, self.printSelectedImage)
 
         # modify the crop frame
+        self.ui.pushButton_editCropFrame.clicked.connect(self.enableFrameEditToggle)
         scCFleft = QShortcut(QKeySequence(Qt.Key_Left), self, self.cropFrameLeft)
         scCFright = QShortcut(QKeySequence(Qt.Key_Right), self, self.cropFrameRight)
         scCFup = QShortcut(QKeySequence(Qt.Key_Up), self, self.cropFrameUp)
@@ -282,6 +283,7 @@ class BoothUI(QWidget):
         self.ui.currentState = S_LIVEVIEW
         self.lastRawPicture = ""
         self.countDownOverlayActive = False
+        self.enableFrameEdit = False
 
         self.countDownTimer = QTimer()
         self.countDownTimer.timeout.connect(self.shotCountDown)
@@ -406,7 +408,13 @@ class BoothUI(QWidget):
         canvas = QPainter()
         canvas.begin(pixmap)
         self.croppedFrame.setBaseImageSize(pixmap)
+
         whiteTransparent = QBrush(QColor(255, 255, 255, 160))
+        greenTransparent = QBrush(QColor(152, 223, 138, 180))
+        if self.enableFrameEdit:
+            overlayColor = greenTransparent
+        else:
+            overlayColor = whiteTransparent
 
         topRect = QRect()
         topRect.setTop(0)
@@ -432,10 +440,10 @@ class BoothUI(QWidget):
         rightRect.setBottom(self.croppedFrame.getOffsetBottom()-1)
         rightRect.setRight(pixmap.width())
 
-        canvas.fillRect(topRect, whiteTransparent)
-        canvas.fillRect(bottomRect, whiteTransparent)
-        canvas.fillRect(leftRect, whiteTransparent)
-        canvas.fillRect(rightRect, whiteTransparent)
+        canvas.fillRect(topRect, overlayColor)
+        canvas.fillRect(bottomRect, overlayColor)
+        canvas.fillRect(leftRect, overlayColor)
+        canvas.fillRect(rightRect, overlayColor)
 
         return pixmap
 
@@ -564,18 +572,32 @@ class BoothUI(QWidget):
             self.pauseLiveview()
 
 
+    def enableFrameEditToggle(self):
+        self.enableFrameEdit = not self.enableFrameEdit
+        if self.enableFrameEdit:
+            buttonTitle = "Bearbeitung stoppen"
+        else:
+            buttonTitle = "Rahmen bearbeiten"
+        self.ui.pushButton_editCropFrame.setText(buttonTitle)
+
     def cropFrameLeft(self):
-        self.croppedFrame.moveFrameToLeft()
+        if self.enableFrameEdit:
+            self.croppedFrame.moveFrameToLeft()
     def cropFrameRight(self):
-        self.croppedFrame.moveFrameToRight()
+        if self.enableFrameEdit:
+            self.croppedFrame.moveFrameToRight()
     def cropFrameUp(self):
-        self.croppedFrame.moveFrameToTop()
+        if self.enableFrameEdit:
+            self.croppedFrame.moveFrameToTop()
     def cropFrameDown(self):
-        self.croppedFrame.moveFrameToBottom()
+        if self.enableFrameEdit:
+            self.croppedFrame.moveFrameToBottom()
     def cropFrameEnlarge(self):
-        self.croppedFrame.enlargeFrame()
+        if self.enableFrameEdit:
+            self.croppedFrame.enlargeFrame()
     def cropFrameShrink(self):
-        self.croppedFrame.shrinkFrame()
+        if self.enableFrameEdit:
+            self.croppedFrame.shrinkFrame()
 
 
     def takeImage(self):
