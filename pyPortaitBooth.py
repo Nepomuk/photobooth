@@ -514,11 +514,47 @@ class BoothUI(QWidget):
 
 
     def overlayShutter(self):
+        # first, block the webcam stream for a while
+        self.camRefresh.stop()
+        self.camHibernate.stop()
+
+        # now produce an overlay to indicate the picture taking process
         pixmap = self.ui.label_pictureView.pixmap()
 
+        # white shadow
         canvas = QPainter()
         canvas.begin(pixmap)
         canvas.fillRect(0,0, pixmap.width(), pixmap.height(), QColor(255,255,255,150))
+
+        # message
+        message = "Aufnahme..."
+        shadowOffset = 2
+        messageRect = pixmap.rect()
+        messageRect.setHeight(pixmap.height()/2)
+        messageFont = QFont("Helvetica Neue")
+        messageFont.setPointSize(100)
+        canvas.setFont( messageFont )
+
+        canvas.setPen( Qt.black )
+        rect1 = messageRect
+        rect1.translate(0,shadowOffset)
+        canvas.drawText( rect1, Qt.AlignCenter, message )
+
+        rect2 = messageRect
+        rect2.translate(0,-shadowOffset)
+        canvas.drawText( rect2, Qt.AlignCenter, message )
+
+        rect3 = messageRect
+        rect3.translate(shadowOffset,0)
+        canvas.drawText( rect3, Qt.AlignCenter, message )
+
+        rect4 = messageRect
+        rect4.translate(-shadowOffset,0)
+        canvas.drawText( rect4, Qt.AlignCenter, message )
+
+        canvas.setPen( Qt.white )
+        canvas.drawText( messageRect, Qt.AlignCenter, message )
+
         canvas.end()
 
         pixmap = self.scaleImageToLabel(pixmap)
@@ -602,10 +638,6 @@ class BoothUI(QWidget):
 
     def takeImage(self):
         """ Read frame from camera and repaint QLabel widget. """
-        # first, block the webcam stream for a while
-        self.camRefresh.stop()
-        self.camHibernate.stop()
-        self.overlayShutter()
 
         # now take a picture
         rawFilePath, filePath = getFilePath()
@@ -645,7 +677,8 @@ class BoothUI(QWidget):
         else:
             self.countDownTimer.stop()
             self.countDownOverlayActive = False
-            QTimer.singleShot(100, self.takeImage)
+            QTimer.singleShot(100, self.overlayShutter)
+            QTimer.singleShot(200, self.takeImage)
 
 
     def updatePictureList(self):
