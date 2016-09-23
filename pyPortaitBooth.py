@@ -803,7 +803,7 @@ class BoothUI(QWidget):
 
         # use imagemagick to convert the color of the image
         levelColors = "'rgb({0},{1},{2})',".format(tone.red(), tone.green(), tone.blue())
-        command = r"convert {0} -clone 0 -contrast -contrast -colorspace Gray +level-colors {1} -compose blend -define compose:args=80 -composite {0}".format(filePath, levelColors)
+        command = r"convert {0} \( -clone 0 -contrast -contrast -colorspace Gray +level-colors {1} \) -compose blend -define compose:args=80 -composite {0}".format(filePath, levelColors)
         call(command, shell=True)
 
 
